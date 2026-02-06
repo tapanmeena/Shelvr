@@ -1,50 +1,190 @@
-# Welcome to your Expo app 👋
+# Shelvr
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An Expo-based eBook reader with Komga server integration for managing your digital book library.
 
-## Get started
+## Features
 
-1. Install dependencies
+### Local ePUB Reading
 
-   ```bash
-   npm install
-   ```
+- Import and read ePUB files from your device
+- Beautiful, customizable reading experience
+- Support for various ePUB formats
 
-2. Start the app
+### Reading Customization
 
-   ```bash
-   npx expo start
-   ```
+- **Themes**: Light, Dark, and Sepia modes
+- **Typography**: Adjustable font size (12-36px)
+- **Font Families**: Serif, Sans-serif, Monospace
+- **Line Spacing**: Comfortable reading with 1.2x to 2.0x options
 
-In the output, you'll find options to open the app in a
+### Komga Server Integration
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Connect to your Komga media server
+- Browse your book library with cover art
+- Download books for offline reading
+- Automatic progress synchronization
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Reading Progress Sync
 
-## Get a fresh project
+- Track your reading position across devices
+- Automatic sync when online
+- Offline reading with queued sync
+- Conflict resolution for multi-device reading
 
-When you're ready, run:
+### Offline Support
+
+- Downloaded books available offline
+- Progress synced when connection restored
+- Network status indicator in header
+
+## Tech Stack
+
+| Component        | Technology                   |
+| ---------------- | ---------------------------- |
+| Framework        | Expo SDK 54                  |
+| Language         | TypeScript 5.x (strict mode) |
+| Navigation       | Expo Router 6.x with Drawer  |
+| ePUB Rendering   | @epubjs-react-native/core    |
+| State Management | Zustand 4.x                  |
+| Database         | expo-sqlite 16.x             |
+| File System      | expo-file-system 19.x        |
+| HTTP Client      | Axios                        |
+| Secure Storage   | expo-secure-store            |
+
+## Getting Started
+
+### Installation
 
 ```bash
-npm run reset-project
+# Clone the repository
+git clone <repository-url>
+cd Shelvr
+
+# Install dependencies
+npm install
+
+# Start development server
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Running the App
 
-## Learn more
+```bash
+# iOS (requires macOS)
+npx expo run:ios
 
-To learn more about developing your project with Expo, look at the following resources:
+# Android
+npx expo run:android
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Start Expo development server
+npx expo start
+```
 
-## Join the community
+## Project Structure
 
-Join our community of developers creating universal apps.
+```
+Shelvr/
+├── app/                          # Expo Router screens
+│   ├── (drawer)/                 # Drawer navigation screens
+│   │   ├── index.tsx             # Library screen
+│   │   ├── server.tsx            # Server connection screen
+│   │   ├── downloads.tsx         # Downloads management
+│   │   └── settings.tsx          # App settings
+│   ├── reader/[bookId].tsx       # Book reader screen
+│   └── _layout.tsx               # Root layout with providers
+├── src/
+│   ├── components/               # Shared UI components
+│   │   ├── BookCard.tsx          # Book display card
+│   │   ├── BookGrid.tsx          # Grid layout for books
+│   │   ├── ErrorBoundary.tsx     # Global error handling
+│   │   └── OfflineIndicator.tsx  # Network status display
+│   ├── database/                 # SQLite database layer
+│   │   ├── schema.ts             # Table definitions
+│   │   ├── useDatabase.tsx       # Database hook
+│   │   └── repositories/         # Data access layer
+│   ├── features/                 # Feature modules
+│   │   ├── komga/                # Komga server integration
+│   │   ├── library/              # Local library management
+│   │   ├── reader/               # ePUB reader components
+│   │   └── sync/                 # Progress synchronization
+│   ├── stores/                   # Zustand state stores
+│   │   ├── preferencesStore.ts   # Reading preferences
+│   │   └── serverStore.ts        # Server connection state
+│   └── types/                    # TypeScript definitions
+├── __tests__/                    # Test files
+│   ├── unit/                     # Unit tests
+│   └── integration/              # Integration tests
+├── specs/                        # Feature specifications
+└── assets/                       # Static assets
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Configuration
+
+### Komga Server Setup
+
+1. Open the app and go to **Server** in the drawer menu
+2. Enter your Komga server URL (e.g., `https://komga.example.com`)
+3. Enter your username and password
+4. Tap **Connect**
+
+### Reading Preferences
+
+Customize your reading experience in **Settings**:
+
+- Theme (Light/Dark/Sepia/System)
+- Font size
+- Font family
+- Line spacing
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run specific test file
+npm test -- epubParser.test.ts
+```
+
+### Type Checking
+
+```bash
+# Check TypeScript types
+npx tsc --noEmit
+
+# Skip library checks for faster checking
+npx tsc --noEmit --skipLibCheck
+```
+
+### Linting
+
+```bash
+# Run ESLint
+npm run lint
+
+# Auto-fix issues
+npm run lint -- --fix
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Komga](https://komga.org/) - Media server for comics/mangas/BDs/ebooks
+- [epub.js](https://github.com/futurepress/epub.js/) - JavaScript library for rendering ePUB documents
+- [Expo](https://expo.dev/) - Platform for universal native apps
