@@ -1,15 +1,38 @@
 import { Ionicons } from "@expo/vector-icons";
+import { DrawerContentScrollView, DrawerItemList } from "@react-navigation/drawer";
+import * as Application from "expo-application";
 import { Drawer } from "expo-router/drawer";
-import { useColorScheme } from "react-native";
+import { ComponentProps } from "react";
+import { StyleSheet, Text, useColorScheme, View } from "react-native";
 
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
+type IconName = ComponentProps<typeof Ionicons>["name"];
 
-const DRAWER_ITEMS: { name: string; title: string; icon: IconName }[] = [
-  { name: "index", title: "Library", icon: "library-outline" },
-  { name: "server", title: "Server", icon: "cloud-outline" },
-  { name: "downloads", title: "Downloads", icon: "download-outline" },
-  { name: "settings", title: "Settings", icon: "settings-outline" },
-];
+const DRAWER_ITEMS: { name: string; title: string; icon: IconName }[] = [{ name: "index", title: "Library", icon: "library-outline" }];
+
+const appName = Application.applicationName;
+const appVersion = Application.nativeApplicationVersion + " | " + Application.nativeBuildVersion;
+
+const CustomDrawerContent = (props: any) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
+  const colors = {
+    subtext: isDark ? "#a0a0a0" : "#666666",
+  };
+
+  return (
+    <View style={styles.drawerContainer}>
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+      </DrawerContentScrollView>
+      <View style={styles.footer}>
+        <Text style={[styles.footerText, { color: colors.subtext }]}>
+          {appName} v{appVersion}
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
@@ -25,6 +48,7 @@ export default function DrawerLayout() {
 
   return (
     <Drawer
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: {
           backgroundColor: colors.card,
@@ -36,7 +60,6 @@ export default function DrawerLayout() {
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
         drawerLabelStyle: {
-          marginLeft: -20,
           fontSize: 16,
         },
       }}
@@ -54,3 +77,17 @@ export default function DrawerLayout() {
     </Drawer>
   );
 }
+
+const styles = StyleSheet.create({
+  drawerContainer: {
+    flex: 1,
+  },
+  footer: {
+    padding: 16,
+    paddingBottom: 24,
+    alignItems: "center",
+  },
+  footerText: {
+    fontSize: 13,
+  },
+});
