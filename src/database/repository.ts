@@ -98,6 +98,10 @@ export const updateBook = async (db: SQLiteDatabase, id: string, updates: Partia
   }
 };
 
+export const deleteBook = async (db: SQLiteDatabase, id: string): Promise<void> => {
+  await db.runAsync("DELETE FROM books WHERE id = ?", [id]);
+};
+
 export const getReadingProgress = async (db: SQLiteDatabase, bookId: string): Promise<ReadingProgress | null> => {
   const row = await db.getFirstAsync<ReadingProgressRow>("SELECT * FROM reading_progress WHERE book_id = ?", [bookId]);
   return row ? rowToReadingProgress(row) : null;

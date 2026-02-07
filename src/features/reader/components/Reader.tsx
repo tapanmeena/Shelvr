@@ -2,7 +2,7 @@ import { Reader as EpubReader, useReader as useEpubReader } from "@epubjs-react-
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View, useColorScheme } from "react-native";
 
-import { useFileSystem } from "@/lib/useFileSystem";
+import { useFileSystem } from "@/src/features/reader/hooks/useFileSystem";
 import { FONT_FAMILY_MAP, THEME_COLORS, usePreferencesStore } from "@/src/stores/preferencesStore";
 import type { Theme } from "@/src/types";
 import { readerLog } from "@/src/utils/logger";
