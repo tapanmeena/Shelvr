@@ -1,8 +1,5 @@
-import { EmptyState } from "@/src/components/EmptyState";
-import { LoadingSpinner } from "@/src/components/LoadingSpinner";
-import { ProgressBar } from "@/src/components/ProgressBar";
-import { Reader } from "@/src/features/reader/components/Reader";
-import { TableOfContents } from "@/src/features/reader/components/TableOfContents";
+import { EmptyState, LoadingSpinner, ProgressBar } from "@/src/components";
+import { Reader, ReaderSettings, TableOfContents } from "@/src/features/reader/components";
 import { useReader } from "@/src/features/reader/hooks/useReader";
 import { readerLog } from "@/src/utils/logger";
 import { ReaderProvider, useReader as useEpubReader } from "@epubjs-react-native/core";
@@ -235,8 +232,7 @@ function ReaderContent({
 
       {/* Reader Settings Modal */}
       <Modal visible={showSettings} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCloseSettings}>
-        {/* <ReaderSettings onClose={onCloseSettings} /> */}
-        <Text>Reader settings modal</Text>
+        <ReaderSettings onClose={onCloseSettings} />
       </Modal>
     </View>
   );
