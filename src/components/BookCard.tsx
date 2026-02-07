@@ -97,7 +97,7 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
             {book.authors.join(", ")}
           </Text>
         )}
-        {hasProgress && <Text style={[styles.progress, { color: colors.progress }]}>{Math.round(progressPercentage * 100)}%</Text>}
+        {hasProgress && <Text style={[styles.progress, { color: colors.progress }]}>{(progressPercentage * 100).toFixed(2)}%</Text>}
       </View>
     </Pressable>
   );

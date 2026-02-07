@@ -22,8 +22,17 @@ const ReaderScreen = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [tocItems] = useState<{ id: string; herf: string; label: string }[]>([]);
 
-  const { book, isLoading, error, initialLocation, initialLocations, currentProgress, currentChapter, saveProgress, handleLocationsReady } =
-    useReader(bookId || "");
+  const {
+    book,
+    isLoading,
+    error,
+    initialLocation,
+    initialLocations,
+    currentProgress,
+    currentChapter,
+    saveProgress,
+    handleLocationsReady,
+  } = useReader(bookId || "");
 
   const lastCfiRef = useRef("");
   const appState = useRef(AppState.currentState);

@@ -28,8 +28,8 @@ export const insertBook = async (db: SQLiteDatabase, book: Book): Promise<void> 
     `INSERT INTO books (
       id, title, authors, description, cover_path, file_path, source,
       komga_book_id, komga_server_id, file_size, page_count, published_date,
-      language, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      language, series, series_index, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       book.id,
       book.title,
@@ -44,6 +44,8 @@ export const insertBook = async (db: SQLiteDatabase, book: Book): Promise<void> 
       book.pageCount ?? null,
       book.publishedDate ?? null,
       book.language ?? null,
+      book.series ?? null,
+      book.seriesIndex ?? null,
       book.createdAt,
       book.updatedAt,
     ],
@@ -62,9 +64,29 @@ export const updateBook = async (db: SQLiteDatabase, id: string, updates: Partia
     fields.push("authors = ?");
     values.push(JSON.stringify(updates.authors));
   }
+  if (updates.description !== undefined) {
+    fields.push("description = ?");
+    values.push(updates.description ?? null);
+  }
   if (updates.coverPath !== undefined) {
     fields.push("cover_path = ?");
-    values.push(updates.coverPath);
+    values.push(updates.coverPath ?? null);
+  }
+  if (updates.language !== undefined) {
+    fields.push("language = ?");
+    values.push(updates.language ?? null);
+  }
+  if (updates.publishedDate !== undefined) {
+    fields.push("published_date = ?");
+    values.push(updates.publishedDate ?? null);
+  }
+  if (updates.series !== undefined) {
+    fields.push("series = ?");
+    values.push(updates.series ?? null);
+  }
+  if (updates.seriesIndex !== undefined) {
+    fields.push("series_index = ?");
+    values.push(updates.seriesIndex ?? null);
   }
 
   fields.push("updated_at = ?");
@@ -111,6 +133,8 @@ interface BookRow {
   page_count: number | null;
   published_date: string | null;
   language: string | null;
+  series: string | null;
+  series_index: number | null;
   created_at: number;
   updated_at: number;
 }
@@ -140,6 +164,8 @@ const rowToBook = (row: BookRow): Book => {
     pageCount: row.page_count ?? undefined,
     publishedDate: row.published_date ?? undefined,
     language: row.language ?? undefined,
+    series: row.series ?? undefined,
+    seriesIndex: row.series_index ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

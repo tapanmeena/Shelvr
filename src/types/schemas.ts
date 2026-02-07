@@ -20,6 +20,8 @@ export const BookSchema = z
     pageCount: z.number().positive().optional(),
     publishedDate: optionalString,
     language: optionalString,
+    series: optionalString,
+    seriesIndex: z.number().optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
   })

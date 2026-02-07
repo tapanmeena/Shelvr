@@ -29,7 +29,7 @@ export const saveProgress = async (
 export const loadProgress = async (db: SQLiteDatabase, bookId: string): Promise<ReadingProgress | null> => {
   const progress = await repository.getReadingProgress(db, bookId);
   if (progress) {
-    readerLog.debug(`Loaded progress for book ${bookId}: ${Math.round(progress.percentage * 100)}%`);
+    readerLog.debug(`Loaded progress for book ${bookId}: ${(progress.percentage * 100).toFixed(2)}%`);
   }
   return progress;
 };

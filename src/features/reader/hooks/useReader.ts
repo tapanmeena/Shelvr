@@ -5,7 +5,7 @@ import * as progressService from "@/src/features/reader/services/progressService
 import { useLibraryStore } from "@/src/stores/libraryStore";
 import { usePreferencesStore } from "@/src/stores/preferencesStore";
 import { Book } from "@/src/types";
-import { readerLog } from "@/src/utils/logger";
+import { dbLog, readerLog } from "@/src/utils/logger";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseReaderReturn {
@@ -51,6 +51,7 @@ export const useReader = (bookId: string): UseReaderReturn => {
 
         // Load book from database
         const dbBook = await repository.getBookById(db, bookId);
+        dbLog.debug("Loaded book from DB:", dbBook);
         if (!dbBook) {
           setError("Book not found");
           return;

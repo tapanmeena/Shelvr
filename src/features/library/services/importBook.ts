@@ -12,6 +12,7 @@ const getDocumentDirectory = (): string => {
 };
 
 const BOOKS_DIRECTORY = `${getDocumentDirectory()}books/`;
+const COVERS_DIRECTORY = `${getDocumentDirectory()}covers/`;
 
 interface ImportResult {
   success: boolean;
@@ -65,6 +66,26 @@ export const importBook = async (pickedFile: PickedFile): Promise<ImportResult> 
     // Parse metadata
     const metadata = await parseEpubMetadata(destinationPath);
 
+    // Save cover image to filesystem if present
+    let coverPath: string | undefined;
+    if (metadata.coverBase64) {
+      try {
+        const coversDirInfo = await FileSystem.getInfoAsync(COVERS_DIRECTORY);
+        if (!coversDirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(COVERS_DIRECTORY, { intermediates: true });
+        }
+
+        const ext = metadata.coverMimeType?.includes("png") ? "png" : "jpg";
+        coverPath = `${COVERS_DIRECTORY}${bookId}.${ext}`;
+        await FileSystem.writeAsStringAsync(coverPath, metadata.coverBase64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        libraryLog.debug("Saved cover image to:", coverPath);
+      } catch (err) {
+        libraryLog.warn("Failed to save cover image:", err);
+      }
+    }
+
     // Create book record
     const now = Date.now();
     const book: Book = {
@@ -72,12 +93,14 @@ export const importBook = async (pickedFile: PickedFile): Promise<ImportResult> 
       title: metadata.title,
       authors: metadata.authors.length > 0 ? metadata.authors : undefined,
       description: metadata.description,
-      coverPath: metadata.coverImagePath,
+      coverPath,
       filePath: destinationPath,
       source: "local",
       fileSize: pickedFile.size,
       publishedDate: metadata.publishedDate,
       language: metadata.language,
+      series: metadata.series,
+      seriesIndex: metadata.seriesIndex,
       createdAt: now,
       updatedAt: now,
     };

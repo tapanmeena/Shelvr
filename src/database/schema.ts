@@ -15,6 +15,8 @@ export const CREATE_BOOKS_TABLE = `
     page_count INTEGER,
     published_date TEXT,
     language TEXT,
+    series TEXT,
+    series_index REAL,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
