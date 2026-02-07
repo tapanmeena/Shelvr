@@ -47,7 +47,7 @@ export const importBook = async (pickedFile: PickedFile): Promise<ImportResult> 
     // Generate UUID and destination path
     const bookId = uuidv4();
     const sanitizedName = pickedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const destinationPath = `${BOOKS_DIRECTORY}${bookId}_${sanitizedName}`;
+    const destinationPath = `${BOOKS_DIRECTORY}${bookId}/${sanitizedName}`;
 
     // Copy file to app storage
     libraryLog.debug("Copying file to :", destinationPath);

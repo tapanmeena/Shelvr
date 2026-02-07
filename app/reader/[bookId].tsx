@@ -1,5 +1,6 @@
 import { EmptyState } from "@/src/components/EmptyState";
 import { LoadingSpinner } from "@/src/components/LoadingSpinner";
+import { ProgressBar } from "@/src/components/ProgressBar";
 import { Reader } from "@/src/features/reader/components/Reader";
 import { useReader } from "@/src/features/reader/hooks/useReader";
 import { readerLog } from "@/src/utils/logger";
@@ -21,7 +22,8 @@ const ReaderScreen = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [tocItems] = useState<{ id: string; herf: string; label: string }[]>([]);
 
-  const { book, isLoading, error, initialLocation, currentProgress, currentChapter, saveProgress } = useReader(bookId || "");
+  const { book, isLoading, error, initialLocation, initialLocations, currentProgress, currentChapter, saveProgress, handleLocationsReady } =
+    useReader(bookId || "");
 
   const lastCfiRef = useRef("");
   const appState = useRef(AppState.currentState);
@@ -39,7 +41,7 @@ const ReaderScreen = () => {
   };
 
   const handleLocationChange = useCallback(
-    (cfi: string, progress: number, chapter?: string) => {
+    (cfi: string, progress: number | null, chapter?: string) => {
       saveProgress(cfi, progress, undefined, chapter);
       lastCfiRef.current = cfi;
     },
@@ -98,7 +100,9 @@ const ReaderScreen = () => {
           <Reader
             bookPath={book.filePath}
             initialLocation={initialLocation}
+            initialLocations={initialLocations}
             onLocationChange={handleLocationChange}
+            onLocationsReady={handleLocationsReady}
             onReady={handleReady}
             onError={handleError}
           />
@@ -138,8 +142,8 @@ const ReaderScreen = () => {
         {showHeader && (
           <SafeAreaView style={[styles.footerOverlay, { backgroundColor: colors.headerBg }]} edges={["bottom"]}>
             <View style={styles.footer}>
-              {/* <ProgressBar progress={currentProgress} /> */}
-              <Text style={[styles.progressText, { color: colors.subtext }]}>{Math.round(currentProgress * 100)}% complete</Text>
+              <ProgressBar progress={currentProgress * 100} />
+              <Text style={[styles.progressText, { color: colors.subtext }]}>{(currentProgress * 100).toFixed(2)}% complete</Text>
             </View>
           </SafeAreaView>
         )}

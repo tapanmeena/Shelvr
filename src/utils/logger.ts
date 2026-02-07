@@ -7,7 +7,7 @@ const log = logger.createLogger({
   transport: isDev ? consoleTransport : fileAsyncTransport,
   transportOptions: {
     colors: {
-      debug: "white",
+      debug: "grey",
       info: "blueBright",
       warn: "yellowBright",
       error: "redBright",

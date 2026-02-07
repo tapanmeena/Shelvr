@@ -1,34 +1,23 @@
-import {
-  Reader as EpubReader,
-  useReader as useEpubReader,
-} from "@epubjs-react-native/core";
+import { Reader as EpubReader, useReader as useEpubReader } from "@epubjs-react-native/core";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View, useColorScheme } from "react-native";
 
 import { useFileSystem } from "@/lib/useFileSystem";
-import {
-  FONT_FAMILY_MAP,
-  THEME_COLORS,
-  usePreferencesStore,
-} from "@/src/stores/preferencesStore";
+import { FONT_FAMILY_MAP, THEME_COLORS, usePreferencesStore } from "@/src/stores/preferencesStore";
 import type { Theme } from "@/src/types";
 import { readerLog } from "@/src/utils/logger";
 
 interface ReaderProps {
   bookPath: string;
   initialLocation?: string;
-  onLocationChange?: (cfi: string, progress: number, chapter?: string) => void;
+  initialLocations?: string[];
+  onLocationChange?: (cfi: string, progress: number | null, chapter?: string) => void;
+  onLocationsReady?: (epubKey: string, locations: string[]) => void;
   onReady?: () => void;
   onError?: (reason: string) => void;
 }
 
-export function Reader({
-  bookPath,
-  initialLocation,
-  onLocationChange,
-  onReady,
-  onError,
-}: ReaderProps) {
+export function Reader({ bookPath, initialLocation, initialLocations, onLocationChange, onLocationsReady, onReady, onError }: ReaderProps) {
   const colorScheme = useColorScheme();
   const [, setIsReady] = useState(false);
 
@@ -39,12 +28,7 @@ export function Reader({
   const lineSpacing = usePreferencesStore((state) => state.lineSpacing);
 
   // Get theme colors
-  const effectiveTheme: Theme =
-    theme === "light" || theme === "dark" || theme === "sepia"
-      ? theme
-      : colorScheme === "dark"
-        ? "dark"
-        : "light";
+  const effectiveTheme: Theme = theme === "light" || theme === "dark" || theme === "sepia" ? theme : colorScheme === "dark" ? "dark" : "light";
   const themeColors = THEME_COLORS[effectiveTheme];
 
   // Memoize theme object to prevent unnecessary re-renders
@@ -58,13 +42,7 @@ export function Reader({
         "line-height": String(lineSpacing),
       },
     }),
-    [
-      themeColors.background,
-      themeColors.text,
-      fontFamily,
-      fontSize,
-      lineSpacing,
-    ],
+    [themeColors.background, themeColors.text, fontFamily, fontSize, lineSpacing],
   );
 
   const handleLocationChange = useCallback(
@@ -76,13 +54,13 @@ export function Reader({
       progress: number,
       _currentSection: { href: string; title?: string } | null,
     ) => {
-      if (onLocationChange && _currentLocation?.start) {
-        onLocationChange(
-          _currentLocation.start.cfi,
-          progress,
-          _currentSection?.title,
-        );
-      }
+      if (!onLocationChange || !_currentLocation?.start) return;
+
+      const locationsReady = _totalLocations > 0 && _currentLocation.start.location !== -1;
+      const percentage = locationsReady ? _currentLocation.start.percentage : null;
+
+      // Always save CFI for position tracking; percentage is null until locations are generated
+      onLocationChange(_currentLocation.start.cfi, percentage, _currentSection?.title);
     },
     [onLocationChange],
   );
@@ -101,19 +79,19 @@ export function Reader({
   );
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: themeColors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       <EpubReader
         src={bookPath}
         fileSystem={useFileSystem}
         initialLocation={initialLocation}
+        initialLocations={initialLocations}
         enableSwipe={true}
         onLocationChange={handleLocationChange}
-        // onReady={handleReady}
-        // onDisplayError={handleError}
-        // enableSelection={true}
-        // defaultTheme={defaultTheme}
+        onLocationsReady={onLocationsReady}
+        onReady={handleReady}
+        onDisplayError={handleError}
+        enableSelection={true}
+        defaultTheme={defaultTheme}
       />
     </View>
   );

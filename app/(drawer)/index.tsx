@@ -85,29 +85,6 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
           <Text style={styles.emptySubText}>Tap the button above to open an EPUB file</Text>
         </View>
       ) : (
-        // <FlatList
-        //   data={books}
-        //   keyExtractor={(item) => item.id}
-        //   renderItem={({ item }) => (
-        //     // <TouchableOpacity
-        //     //   style={{
-        //     //     backgroundColor: "green",
-        //     //     padding: 10,
-        //     //     marginBottom: 5,
-        //     //   }}
-        //     //   onPress={() => {
-        //     //     router.push({
-        //     //       pathname: "/reader/[bookId]",
-        //     //       params: { bookId: item.id },
-        //     //     });
-        //     //   }}
-        //     // >
-        //     //   <Text>{item.title}</Text>
-        //     // </TouchableOpacity>
-        //     <BookCard
-        //   )}
-        //   contentContainerStyle={styles.list}
-        // />
         <BookGrid
           books={books}
           onBookPress={handleBookPress}

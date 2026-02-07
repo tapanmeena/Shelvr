@@ -1,5 +1,6 @@
 import * as repository from "@/src/database/repository";
 import { useDatabase, useDatabaseStatus } from "@/src/database/useDatabase";
+import * as locationsCache from "@/src/features/reader/services/locationsCache";
 import * as progressService from "@/src/features/reader/services/progressService";
 import { useLibraryStore } from "@/src/stores/libraryStore";
 import { usePreferencesStore } from "@/src/stores/preferencesStore";
@@ -12,9 +13,11 @@ interface UseReaderReturn {
   isLoading: boolean;
   error: string | null;
   initialLocation: string | undefined;
+  initialLocations: string[] | undefined;
   currentProgress: number;
   currentChapter: string | undefined;
-  saveProgress: (cfi: string, progress: number, chapter?: string, chapterTitle?: string) => void;
+  saveProgress: (cfi: string, progress: number | null, chapter?: string, chapterTitle?: string) => void;
+  handleLocationsReady: (epubKey: string, locations: string[]) => void;
 }
 
 export const useReader = (bookId: string): UseReaderReturn => {
@@ -24,6 +27,7 @@ export const useReader = (bookId: string): UseReaderReturn => {
   const [currentChapter, setCurrentChapter] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialLocations, setInitialLocations] = useState<string[] | undefined>(undefined);
 
   const db = useDatabase();
   const { isReady } = useDatabaseStatus();
@@ -62,6 +66,12 @@ export const useReader = (bookId: string): UseReaderReturn => {
           setCurrentChapter(progress.chapterTitle);
         }
 
+        // Load cached locations for instant availability
+        const cachedLocations = await locationsCache.loadLocations(bookId);
+        if (cachedLocations) {
+          setInitialLocations(cachedLocations);
+        }
+
         // Update last opened book
         setLastOpenedBook(bookId);
       } catch (err) {
@@ -77,20 +87,24 @@ export const useReader = (bookId: string): UseReaderReturn => {
 
   // Save progress with debouncing
   const saveProgress = useCallback(
-    (cfi: string, progress: number, chapter?: string, chapterTitle?: string) => {
+    (cfi: string, progress: number | null, chapter?: string, chapterTitle?: string) => {
       if (!isReady || !db) {
         return;
       }
 
-      // Update local state immediately
-      setCurrentProgress(progress);
+      // Only update percentage state/storage when locations are ready (progress is not null)
+      const effectiveProgress = progress ?? currentProgress;
+
+      if (progress !== null) {
+        setCurrentProgress(progress);
+      }
       setCurrentChapter(chapterTitle);
 
       // Check if we should save (significant change)
       const lastSave = lastSaveRef.current;
       const significantChange =
         !lastSave ||
-        Math.abs(progress - lastSave.progress) >= 0.01 || // 1% change
+        (progress !== null && Math.abs(effectiveProgress - lastSave.progress) >= 0.01) || // 1% change
         cfi !== lastSave.cfi;
 
       if (!significantChange) {
@@ -105,15 +119,15 @@ export const useReader = (bookId: string): UseReaderReturn => {
       // Debounce the save
       saveTimeoutRef.current = setTimeout(async () => {
         try {
-          await progressService.saveProgress(db, bookId, cfi, progress, chapter, chapterTitle);
+          await progressService.saveProgress(db, bookId, cfi, effectiveProgress, chapter, chapterTitle);
 
-          lastSaveRef.current = { cfi, progress };
+          lastSaveRef.current = { cfi, progress: effectiveProgress };
 
           // Update store
           setProgressInStore(bookId, {
             bookId,
             cfi,
-            percentage: progress,
+            percentage: effectiveProgress,
             chapter,
             chapterTitle,
             lastReadAt: Date.now(),
@@ -123,7 +137,7 @@ export const useReader = (bookId: string): UseReaderReturn => {
         }
       }, 1000); // 1 second debounce
     },
-    [bookId, db, isReady, setProgressInStore],
+    [bookId, db, isReady, currentProgress, setProgressInStore],
   );
 
   // Cleanup timeout on unmount
@@ -135,13 +149,24 @@ export const useReader = (bookId: string): UseReaderReturn => {
     };
   }, []);
 
+  // Cache locations when epub.js finishes generating them
+  const handleLocationsReady = useCallback(
+    (_epubKey: string, locations: string[]) => {
+      readerLog.info(`Locations generated (${locations.length} total), caching for book ${bookId}`);
+      locationsCache.saveLocations(bookId, locations);
+    },
+    [bookId],
+  );
+
   return {
     book,
     isLoading,
     error,
     initialLocation,
+    initialLocations,
     currentProgress,
     currentChapter,
     saveProgress,
+    handleLocationsReady,
   };
 };
