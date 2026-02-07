@@ -2,14 +2,15 @@ import { EmptyState } from "@/src/components/EmptyState";
 import { LoadingSpinner } from "@/src/components/LoadingSpinner";
 import { ProgressBar } from "@/src/components/ProgressBar";
 import { Reader } from "@/src/features/reader/components/Reader";
+import { TableOfContents } from "@/src/features/reader/components/TableOfContents";
 import { useReader } from "@/src/features/reader/hooks/useReader";
 import { readerLog } from "@/src/utils/logger";
-import { ReaderProvider } from "@epubjs-react-native/core";
+import { ReaderProvider, useReader as useEpubReader } from "@epubjs-react-native/core";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useRef, useState } from "react";
-import { AppState, Modal, Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ReaderScreen = () => {
@@ -20,22 +21,11 @@ const ReaderScreen = () => {
   const [showHeader, setShowHeader] = useState(true);
   const [showToc, setShowToc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [tocItems] = useState<{ id: string; herf: string; label: string }[]>([]);
 
-  const {
-    book,
-    isLoading,
-    error,
-    initialLocation,
-    initialLocations,
-    currentProgress,
-    currentChapter,
-    saveProgress,
-    handleLocationsReady,
-  } = useReader(bookId || "");
+  const { book, isLoading, error, initialLocation, initialLocations, currentProgress, currentChapter, saveProgress, handleLocationsReady } =
+    useReader(bookId || "");
 
   const lastCfiRef = useRef("");
-  const appState = useRef(AppState.currentState);
 
   const colors = {
     background: isDark ? "#1a1a2e" : "#ffffff",
@@ -73,10 +63,6 @@ const ReaderScreen = () => {
     setShowToc(true);
   };
 
-  const handleSelectChapter = (_href: string) => {
-    setShowToc(false);
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -101,82 +87,160 @@ const ReaderScreen = () => {
   }
   return (
     <ReaderProvider>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <StatusBar hidden={!showHeader} />
-
-        {/* Reader Content */}
-        <Pressable style={styles.readerContainer} onPress={handleReaderTap}>
-          <Reader
-            bookPath={book.filePath}
-            initialLocation={initialLocation}
-            initialLocations={initialLocations}
-            onLocationChange={handleLocationChange}
-            onLocationsReady={handleLocationsReady}
-            onReady={handleReady}
-            onError={handleError}
-          />
-        </Pressable>
-        {/* Header Overlay */}
-        {showHeader && (
-          <SafeAreaView style={[styles.headerOverlay, { backgroundColor: colors.headerBg }]} edges={["top"]}>
-            <View style={styles.header}>
-              <Pressable onPress={handleClose} style={styles.headerButton}>
-                <Ionicons name="close" size={28} color={colors.text} />
-              </Pressable>
-
-              <View style={styles.headerCenter}>
-                <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-                  {book.title}
-                </Text>
-                {currentChapter && (
-                  <Text style={[styles.headerSubtitle, { color: colors.subtext }]} numberOfLines={1}>
-                    {currentChapter}
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.headerActions}>
-                <Pressable style={styles.headerButton} onPress={handleOpenToc}>
-                  <Ionicons name="list" size={24} color={colors.text} />
-                </Pressable>
-                <Pressable style={styles.headerButton} onPress={() => setShowSettings(true)}>
-                  <Ionicons name="settings-outline" size={24} color={colors.text} />
-                </Pressable>
-              </View>
-            </View>
-          </SafeAreaView>
-        )}
-
-        {/* Footer Overlay with Progress */}
-        {showHeader && (
-          <SafeAreaView style={[styles.footerOverlay, { backgroundColor: colors.headerBg }]} edges={["bottom"]}>
-            <View style={styles.footer}>
-              <ProgressBar progress={currentProgress * 100} />
-              <Text style={[styles.progressText, { color: colors.subtext }]}>{(currentProgress * 100).toFixed(2)}% complete</Text>
-            </View>
-          </SafeAreaView>
-        )}
-
-        {/* Table of Contents Modal */}
-        <Modal visible={showToc} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowToc(false)}>
-          {/* <TableOfContents
-            items={tocItems}
-            currentChapter={currentChapter}
-            onSelectChapter={handleSelectChapter}
-            onClose={() => setShowToc(false)}
-          /> */}
-          <Text>Random Table of contents modal</Text>
-        </Modal>
-
-        {/* Reader Settings Modal */}
-        <Modal visible={showSettings} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSettings(false)}>
-          {/* <ReaderSettings onClose={() => setShowSettings(false)} /> */}
-          <Text>Reader settings modal</Text>
-        </Modal>
-      </View>
+      <ReaderContent
+        book={book}
+        initialLocation={initialLocation}
+        initialLocations={initialLocations}
+        showHeader={showHeader}
+        showToc={showToc}
+        showSettings={showSettings}
+        currentProgress={currentProgress}
+        currentChapter={currentChapter}
+        colors={colors}
+        onReaderTap={handleReaderTap}
+        onClose={handleClose}
+        onOpenToc={handleOpenToc}
+        onCloseToc={() => setShowToc(false)}
+        onLocationChange={handleLocationChange}
+        onLocationsReady={handleLocationsReady}
+        onReady={handleReady}
+        onError={handleError}
+        onShowSettings={() => setShowSettings(true)}
+        onCloseSettings={() => setShowSettings(false)}
+      />
     </ReaderProvider>
   );
 };
+
+interface ReaderContentProps {
+  book: NonNullable<ReturnType<typeof useReader>["book"]>;
+  initialLocation?: string;
+  initialLocations?: string[];
+  showHeader: boolean;
+  showToc: boolean;
+  showSettings: boolean;
+  currentProgress: number;
+  currentChapter?: string;
+  colors: Record<string, string>;
+  onReaderTap: () => void;
+  onClose: () => void;
+  onOpenToc: () => void;
+  onCloseToc: () => void;
+  onLocationChange: (cfi: string, progress: number | null, chapter?: string) => void;
+  onLocationsReady: (epubKey: string, locations: string[]) => void;
+  onReady: () => void;
+  onError: (reason: string) => void;
+  onShowSettings: () => void;
+  onCloseSettings: () => void;
+}
+
+/** Inner component that can access ReaderProvider context */
+function ReaderContent({
+  book,
+  initialLocation,
+  initialLocations,
+  showHeader,
+  showToc,
+  showSettings,
+  currentProgress,
+  currentChapter,
+  colors,
+  onReaderTap,
+  onClose,
+  onOpenToc,
+  onCloseToc,
+  onLocationChange,
+  onLocationsReady,
+  onReady,
+  onError,
+  onShowSettings,
+  onCloseSettings,
+}: ReaderContentProps) {
+  const { toc, goToLocation, section } = useEpubReader();
+
+  // Use the epub reader's current section for TOC highlighting,
+  // fall back to the persisted currentChapter from useReader
+  const activeChapter = section?.label?.trim() || currentChapter;
+
+  const handleSelectChapter = useCallback(
+    (href: string) => {
+      goToLocation(href);
+      onCloseToc();
+    },
+    [goToLocation, onCloseToc],
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar hidden={!showHeader} />
+
+      {/* Reader Content */}
+      <Pressable style={styles.readerContainer} onPress={onReaderTap}>
+        <Reader
+          bookPath={book.filePath}
+          initialLocation={initialLocation}
+          initialLocations={initialLocations}
+          onLocationChange={onLocationChange}
+          onLocationsReady={onLocationsReady}
+          onReady={onReady}
+          onError={onError}
+        />
+      </Pressable>
+
+      {/* Header Overlay */}
+      {showHeader && (
+        <SafeAreaView style={[styles.headerOverlay, { backgroundColor: colors.headerBg }]} edges={["top"]}>
+          <View style={styles.header}>
+            <Pressable onPress={onClose} style={styles.headerButton}>
+              <Ionicons name="close" size={28} color={colors.text} />
+            </Pressable>
+
+            <View style={styles.headerCenter}>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                {book.title}
+              </Text>
+              {activeChapter && (
+                <Text style={[styles.headerSubtitle, { color: colors.subtext }]} numberOfLines={1}>
+                  {activeChapter}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.headerActions}>
+              <Pressable style={styles.headerButton} onPress={onOpenToc}>
+                <Ionicons name="list" size={24} color={colors.text} />
+              </Pressable>
+              <Pressable style={styles.headerButton} onPress={onShowSettings}>
+                <Ionicons name="settings-outline" size={24} color={colors.text} />
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      )}
+
+      {/* Footer Overlay with Progress */}
+      {showHeader && (
+        <SafeAreaView style={[styles.footerOverlay, { backgroundColor: colors.headerBg }]} edges={["bottom"]}>
+          <View style={styles.footer}>
+            <ProgressBar progress={currentProgress * 100} />
+            <Text style={[styles.progressText, { color: colors.subtext }]}>{(currentProgress * 100).toFixed(2)}% complete</Text>
+          </View>
+        </SafeAreaView>
+      )}
+
+      {/* Table of Contents Modal */}
+      <Modal visible={showToc} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCloseToc}>
+        <TableOfContents items={toc} currentChapter={activeChapter} onSelectChapter={handleSelectChapter} onClose={onCloseToc} />
+      </Modal>
+
+      {/* Reader Settings Modal */}
+      <Modal visible={showSettings} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCloseSettings}>
+        {/* <ReaderSettings onClose={onCloseSettings} /> */}
+        <Text>Reader settings modal</Text>
+      </Modal>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
