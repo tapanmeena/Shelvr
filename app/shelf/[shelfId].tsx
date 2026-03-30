@@ -4,7 +4,7 @@ import { LoadingSpinner } from "@/src/components/LoadingSpinner";
 import * as repository from "@/src/database/repository";
 import { useDatabase } from "@/src/database/useDatabase";
 import { useThemeColors } from "@/src/stores/preferencesStore";
-import { BookWithProgress } from "@/src/types";
+import { BookWithProgress, Shelf } from "@/src/types";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -18,7 +18,7 @@ export default function ShelfDetailScreen() {
   const db = useDatabase();
   const progressMap = useLibraryStore((s) => s.progressMap);
 
-  const [shelfName, setShelfName] = useState("");
+  const [shelf, setShelf] = useState<Shelf | null>(null);
   const [books, setBooks] = useState<BookWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,8 +26,8 @@ export default function ShelfDetailScreen() {
     if (!shelfId) return;
     try {
       setIsLoading(true);
-      const shelf = await repository.getShelfById(db, shelfId);
-      if (shelf) setShelfName(shelf.name);
+      const loadedShelf = await repository.getShelfById(db, shelfId);
+      if (loadedShelf) setShelf(loadedShelf);
       const shelfBooks = await repository.getShelfBooks(db, shelfId);
       const withProgress: BookWithProgress[] = shelfBooks.map((book) => ({
         ...book,
@@ -47,19 +47,39 @@ export default function ShelfDetailScreen() {
     router.push(`/reader/${book.id}`);
   }, []);
 
+  const accentColor = shelf?.color ?? colors.accent;
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: accentColor + "10" }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {shelfName}
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {shelf?.name ?? ""}
+          </Text>
+          <Text
+            style={[styles.headerSubtitle, { color: colors.textSecondary }]}
+          >
+            {books.length} {books.length === 1 ? "book" : "books"}
+          </Text>
+          {shelf?.description && (
+            <Text
+              style={[
+                styles.headerDescription,
+                { color: colors.textSecondary },
+              ]}
+              numberOfLines={2}
+            >
+              {shelf.description}
+            </Text>
+          )}
+        </View>
         <View style={{ width: 24 }} />
       </View>
 
@@ -88,16 +108,28 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     gap: 12,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
-    flex: 1,
     textAlign: "center",
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  headerDescription: {
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

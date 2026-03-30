@@ -77,6 +77,8 @@ export const AccentColorSchema = z.enum([
 
 export const LibraryViewModeSchema = z.enum(["grid", "list"]);
 
+export const ShelvesViewModeSchema = z.enum(["cards", "bookshelf"]);
+
 export const UserPreferencesSchema = z.object({
   theme: ThemeSchema,
   accentColor: AccentColorSchema,
@@ -84,6 +86,7 @@ export const UserPreferencesSchema = z.object({
   fontFamily: FontFamilySchema,
   lineSpacing: z.number().min(1.0).max(2.5),
   libraryViewMode: LibraryViewModeSchema,
+  shelvesViewMode: ShelvesViewModeSchema,
   reopenLastBookOnLaunch: z.boolean(),
   lastOpenedBookId: optionalString,
   hasCompletedOnboarding: z.boolean(),
@@ -96,6 +99,7 @@ export type Theme = z.infer<typeof ThemeSchema>;
 export type FontFamily = z.infer<typeof FontFamilySchema>;
 export type AccentColor = z.infer<typeof AccentColorSchema>;
 export type LibraryViewMode = z.infer<typeof LibraryViewModeSchema>;
+export type ShelvesViewMode = z.infer<typeof ShelvesViewModeSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
 // Shelf

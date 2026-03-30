@@ -1,7 +1,7 @@
 import * as repository from "@/src/database/repository";
 import { useDatabase } from "@/src/database/useDatabase";
 import { useShelfStore } from "@/src/stores/shelfStore";
-import { Shelf } from "@/src/types";
+import { Shelf, ShelfWithPreview } from "@/src/types";
 import { libraryLog } from "@/src/utils/logger";
 import { useCallback, useEffect, useState } from "react";
 import "react-native-get-random-values";
@@ -11,6 +11,9 @@ export function useShelves() {
   const db = useDatabase();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shelvesWithPreviews, setShelvesWithPreviews] = useState<
+    ShelfWithPreview[]
+  >([]);
 
   const shelves = useShelfStore((s) => s.shelves);
   const setShelves = useShelfStore((s) => s.setShelves);
@@ -25,6 +28,9 @@ export function useShelves() {
       setIsLoading(true);
       const dbShelves = await repository.getShelves(db);
       setShelves(dbShelves);
+      // Load previews (covers + counts)
+      const previews = await repository.getShelvesWithPreviews(db);
+      setShelvesWithPreviews(previews);
       setError(null);
     } catch (err) {
       libraryLog.error("Failed to load shelves:", err);
@@ -104,6 +110,9 @@ export function useShelves() {
       try {
         await repository.addBookToShelf(db, bookId, shelfId);
         addBookToShelfStore(bookId, shelfId);
+        // Refresh previews
+        const previews = await repository.getShelvesWithPreviews(db);
+        setShelvesWithPreviews(previews);
       } catch (err) {
         libraryLog.error("Failed to add book to shelf:", err);
         throw err;
@@ -117,6 +126,9 @@ export function useShelves() {
       try {
         await repository.removeBookFromShelf(db, bookId, shelfId);
         removeBookFromShelfStore(bookId, shelfId);
+        // Refresh previews
+        const previews = await repository.getShelvesWithPreviews(db);
+        setShelvesWithPreviews(previews);
       } catch (err) {
         libraryLog.error("Failed to remove book from shelf:", err);
         throw err;
@@ -134,6 +146,7 @@ export function useShelves() {
 
   return {
     shelves,
+    shelvesWithPreviews,
     isLoading,
     error,
     refresh: loadShelves,

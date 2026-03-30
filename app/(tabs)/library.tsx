@@ -7,6 +7,8 @@ import { DeleteBookModal } from "@/src/features/library/components/DeleteBookMod
 import { useBookSearch } from "@/src/features/library/hooks/useBookSearch";
 import { useImportBook } from "@/src/features/library/hooks/useImportBook";
 import useLibrary from "@/src/features/library/hooks/useLibrary";
+import { AddToShelfSheet } from "@/src/features/shelves/components/AddToShelfSheet";
+import { useShelves } from "@/src/features/shelves/hooks/useShelves";
 import { useLibraryStore } from "@/src/stores/libraryStore";
 import { useThemeColors } from "@/src/stores/preferencesStore";
 import { BookWithProgress } from "@/src/types";
@@ -81,6 +83,13 @@ const LibraryContent = () => {
 
   const db = useDatabase();
   const removeBook = useLibraryStore((state) => state.removeBook);
+  const { addBookToShelf, removeBookFromShelf } = useShelves();
+
+  // Add to shelf state
+  const [shelfSheetVisible, setShelfSheetVisible] = useState(false);
+  const [bookForShelf, setBookForShelf] = useState<BookWithProgress | null>(
+    null,
+  );
 
   const handleImport = async () => {
     clearError();
@@ -98,8 +107,14 @@ const LibraryContent = () => {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ["Cancel", "Open Book", "Book Info", "Remove from Library"],
-          destructiveButtonIndex: 3,
+          options: [
+            "Cancel",
+            "Open Book",
+            "Book Info",
+            "Add to Shelf",
+            "Remove from Library",
+          ],
+          destructiveButtonIndex: 4,
           cancelButtonIndex: 0,
           title: book.title,
           message: book.authors?.join(", ") || undefined,
@@ -110,6 +125,9 @@ const LibraryContent = () => {
           } else if (buttonIndex === 2) {
             showBookInfo(book);
           } else if (buttonIndex === 3) {
+            setBookForShelf(book);
+            setShelfSheetVisible(true);
+          } else if (buttonIndex === 4) {
             setBookToDelete(book);
             setDeleteModalVisible(true);
           }
@@ -122,6 +140,13 @@ const LibraryContent = () => {
         [
           { text: "Open", onPress: () => handleBookPress(book) },
           { text: "Info", onPress: () => showBookInfo(book) },
+          {
+            text: "Add to Shelf",
+            onPress: () => {
+              setBookForShelf(book);
+              setShelfSheetVisible(true);
+            },
+          },
           {
             text: "Remove",
             style: "destructive",
@@ -335,6 +360,21 @@ const LibraryContent = () => {
           setBookToDelete(null);
         }}
       />
+
+      {/* Add to Shelf Sheet */}
+      {bookForShelf && (
+        <AddToShelfSheet
+          visible={shelfSheetVisible}
+          bookId={bookForShelf.id}
+          bookTitle={bookForShelf.title}
+          onAddToShelf={addBookToShelf}
+          onRemoveFromShelf={removeBookFromShelf}
+          onClose={() => {
+            setShelfSheetVisible(false);
+            setBookForShelf(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };

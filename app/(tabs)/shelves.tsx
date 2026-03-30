@@ -2,14 +2,20 @@ import { EmptyState } from "@/src/components/EmptyState";
 import { LoadingSpinner } from "@/src/components/LoadingSpinner";
 import { useDatabaseStatus } from "@/src/database/useDatabase";
 import { CreateShelfModal } from "@/src/features/shelves/components/CreateShelfModal";
+import { ShelfCollageCard } from "@/src/features/shelves/components/ShelfCollageCard";
+import { ShelfRow } from "@/src/features/shelves/components/ShelfRow";
 import { useShelves } from "@/src/features/shelves/hooks/useShelves";
-import { useThemeColors } from "@/src/stores/preferencesStore";
-import { Shelf } from "@/src/types";
+import {
+  usePreferencesStore,
+  useThemeColors,
+} from "@/src/stores/preferencesStore";
+import { Shelf, ShelfWithPreview } from "@/src/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
+  Dimensions,
   FlatList,
   Pressable,
   StyleSheet,
@@ -18,13 +24,31 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const CARD_GAP = 12;
+const HORIZONTAL_PADDING = 16;
+
 export default function ShelvesScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const { isReady: dbReady } = useDatabaseStatus();
-  const { shelves, isLoading, createShelf, deleteShelf, refresh } =
-    useShelves();
+  const {
+    shelves,
+    shelvesWithPreviews,
+    isLoading,
+    createShelf,
+    deleteShelf,
+    refresh,
+  } = useShelves();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const viewMode = usePreferencesStore((s) => s.shelvesViewMode);
+  const setViewMode = usePreferencesStore((s) => s.setShelvesViewMode);
+
+  const screenWidth = Dimensions.get("window").width;
+  const cardWidth = useMemo(
+    () => (screenWidth - HORIZONTAL_PADDING * 2 - CARD_GAP) / 2,
+    [screenWidth],
+  );
 
   if (!dbReady) {
     return (
@@ -70,39 +94,44 @@ export default function ShelvesScreen() {
     router.push(`/shelf/${shelf.id}` as any);
   };
 
-  const renderShelf = ({ item }: { item: Shelf }) => (
-    <Pressable
-      style={[styles.shelfCard, { backgroundColor: colors.surface }]}
-      onPress={() => handleShelfPress(item)}
-      onLongPress={() => handleDeleteShelf(item)}
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "cards" ? "bookshelf" : "cards");
+  };
+
+  const renderCollageCard = ({
+    item,
+    index,
+  }: {
+    item: ShelfWithPreview;
+    index: number;
+  }) => (
+    <View
+      style={[
+        styles.cardWrapper,
+        { width: cardWidth },
+        index % 2 === 0 ? { marginRight: CARD_GAP } : null,
+      ]}
     >
-      <View
-        style={[
-          styles.shelfIcon,
-          { backgroundColor: item.color ?? colors.accent + "20" },
-        ]}
-      >
-        <Ionicons
-          name={(item.icon as any) ?? "library-outline"}
-          size={24}
-          color={item.color ?? colors.accent}
-        />
-      </View>
-      <View style={styles.shelfInfo}>
-        <Text style={[styles.shelfName, { color: colors.text }]}>
-          {item.name}
-        </Text>
-        {item.description && (
-          <Text
-            style={[styles.shelfDescription, { color: colors.textSecondary }]}
-            numberOfLines={1}
-          >
-            {item.description}
-          </Text>
-        )}
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-    </Pressable>
+      <ShelfCollageCard
+        shelf={item}
+        onPress={() => handleShelfPress(item)}
+        onLongPress={() => handleDeleteShelf(item)}
+      />
+    </View>
+  );
+
+  const renderShelfRow = ({ item }: { item: ShelfWithPreview }) => (
+    <ShelfRow shelf={item} onShelfPress={() => handleShelfPress(item)} />
+  );
+
+  const emptyComponent = (
+    <EmptyState
+      icon="layers-outline"
+      title="No Shelves Yet"
+      message="Create shelves to organize your books into collections"
+      actionLabel="Create Shelf"
+      onAction={() => setShowCreateModal(true)}
+    />
   );
 
   return (
@@ -115,28 +144,45 @@ export default function ShelvesScreen() {
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Shelves
         </Text>
+        <View style={styles.headerActions}>
+          {shelves.length > 0 && (
+            <Pressable onPress={toggleViewMode} hitSlop={8}>
+              <Ionicons
+                name={viewMode === "cards" ? "reorder-three" : "grid-outline"}
+                size={24}
+                color={colors.text}
+              />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {isLoading ? (
         <LoadingSpinner message="Loading shelves..." />
-      ) : (
+      ) : viewMode === "cards" ? (
         <FlatList
-          data={shelves}
-          renderItem={renderShelf}
+          key="cards-grid"
+          data={shelvesWithPreviews}
+          renderItem={renderCollageCard}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
+          numColumns={2}
+          contentContainerStyle={styles.cardsList}
           showsVerticalScrollIndicator={false}
           refreshing={isLoading}
           onRefresh={refresh}
-          ListEmptyComponent={
-            <EmptyState
-              icon="layers-outline"
-              title="No Shelves Yet"
-              message="Create shelves to organize your books into collections"
-              actionLabel="Create Shelf"
-              onAction={() => setShowCreateModal(true)}
-            />
-          }
+          ListEmptyComponent={emptyComponent}
+        />
+      ) : (
+        <FlatList
+          key="bookshelf-list"
+          data={shelvesWithPreviews}
+          renderItem={renderShelfRow}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.bookshelfList}
+          showsVerticalScrollIndicator={false}
+          refreshing={isLoading}
+          onRefresh={refresh}
+          ListEmptyComponent={emptyComponent}
         />
       )}
 
@@ -162,6 +208,9 @@ export default function ShelvesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
@@ -170,35 +219,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.5,
   },
-  list: {
-    paddingHorizontal: 16,
+  headerActions: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  cardsList: {
+    paddingHorizontal: HORIZONTAL_PADDING,
     paddingBottom: 100,
   },
-  shelfCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
-    gap: 14,
+  cardWrapper: {
+    marginBottom: CARD_GAP,
   },
-  shelfIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  shelfInfo: {
-    flex: 1,
-  },
-  shelfName: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  shelfDescription: {
-    fontSize: 13,
-    marginTop: 2,
+  bookshelfList: {
+    paddingTop: 8,
+    paddingBottom: 100,
   },
   fab: {
     position: "absolute",

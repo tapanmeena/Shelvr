@@ -1,4 +1,10 @@
-import { Book, BookShelf, ReadingProgress, Shelf } from "@/src/types";
+import {
+  Book,
+  BookShelf,
+  ReadingProgress,
+  Shelf,
+  ShelfWithPreview,
+} from "@/src/types";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 // Books
@@ -416,4 +422,39 @@ export const getShelfBookCount = async (
     [shelfId],
   );
   return result?.count ?? 0;
+};
+
+export const getShelfPreview = async (
+  db: SQLiteDatabase,
+  shelfId: string,
+): Promise<{ bookCount: number; coverPaths: (string | null)[] }> => {
+  const countResult = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM book_shelves WHERE shelf_id = ?",
+    [shelfId],
+  );
+  const bookCount = countResult?.count ?? 0;
+
+  const coverRows = await db.getAllAsync<{ cover_path: string | null }>(
+    `SELECT b.cover_path FROM books b
+     INNER JOIN book_shelves bs ON b.id = bs.book_id
+     WHERE bs.shelf_id = ?
+     ORDER BY bs.added_at DESC LIMIT 4`,
+    [shelfId],
+  );
+  const coverPaths = coverRows.map((r) => r.cover_path ?? null);
+
+  return { bookCount, coverPaths };
+};
+
+export const getShelvesWithPreviews = async (
+  db: SQLiteDatabase,
+): Promise<ShelfWithPreview[]> => {
+  const shelves = await getShelves(db);
+  const previews = await Promise.all(
+    shelves.map(async (shelf) => {
+      const preview = await getShelfPreview(db, shelf.id);
+      return { ...shelf, ...preview };
+    }),
+  );
+  return previews;
 };

@@ -2,6 +2,7 @@ import {
   DEFAULT_PREFERENCES,
   FontFamily,
   LibraryViewMode,
+  ShelvesViewMode,
   Theme,
   UserPreferences,
 } from "@/src/types";
@@ -22,6 +23,7 @@ interface PreferencesActions {
   setFontFamily: (family: FontFamily) => void;
   setLineSpacing: (spacing: number) => void;
   setLibraryViewMode: (mode: LibraryViewMode) => void;
+  setShelvesViewMode: (mode: ShelvesViewMode) => void;
   setLastOpenedBook: (bookId: string | undefined) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;
   reset: () => void;
@@ -55,6 +57,8 @@ export const usePreferencesStore = create<PreferncesStore>()(
 
       setLibraryViewMode: (libraryViewMode) => set({ libraryViewMode }),
 
+      setShelvesViewMode: (shelvesViewMode) => set({ shelvesViewMode }),
+
       setLastOpenedBook: (lastOpenedBookId) => set({ lastOpenedBookId }),
 
       setHasCompletedOnboarding: (hasCompletedOnboarding) =>
@@ -74,6 +78,7 @@ export const usePreferencesStore = create<PreferncesStore>()(
         fontFamily: state.fontFamily,
         lineSpacing: state.lineSpacing,
         libraryViewMode: state.libraryViewMode,
+        shelvesViewMode: state.shelvesViewMode,
         lastOpenedBookId: state.lastOpenedBookId,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
       }),
