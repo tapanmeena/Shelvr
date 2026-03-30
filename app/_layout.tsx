@@ -2,11 +2,12 @@ import { DatabaseProvider } from "@/src/database/useDatabase";
 import {
   usePreferencesStore,
   useTamaguiThemeName,
+  useThemeColors,
 } from "@/src/stores/preferencesStore";
 import { tamaguiConfig } from "@/src/theme";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -42,13 +43,19 @@ function useOnboardingRedirect() {
 
 function AppContent() {
   const themeName = useTamaguiThemeName();
+  const colors = useThemeColors();
   useOnboardingRedirect();
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={themeName}>
       <DatabaseProvider>
         <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
@@ -71,8 +78,15 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  const colors = useThemeColors();
+
+  const rootStyle = useMemo(
+    () => [styles.container, { backgroundColor: colors.background }],
+    [colors.background],
+  );
+
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider>
         <AppContent />
       </SafeAreaProvider>
