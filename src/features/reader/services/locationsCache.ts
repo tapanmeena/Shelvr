@@ -7,7 +7,10 @@ const LOCATIONS_KEY_PREFIX = "shelvr_locations_";
  * Save generated epub locations to AsyncStorage for a given book.
  * This avoids the expensive location generation on every book open.
  */
-export const saveLocations = async (bookId: string, locations: string[]): Promise<void> => {
+export const saveLocations = async (
+  bookId: string,
+  locations: string[],
+): Promise<void> => {
   try {
     const key = `${LOCATIONS_KEY_PREFIX}${bookId}`;
     await AsyncStorage.setItem(key, JSON.stringify(locations));
@@ -21,14 +24,18 @@ export const saveLocations = async (bookId: string, locations: string[]): Promis
  * Load cached epub locations from AsyncStorage.
  * Returns null if no cached locations exist.
  */
-export const loadLocations = async (bookId: string): Promise<string[] | null> => {
+export const loadLocations = async (
+  bookId: string,
+): Promise<string[] | null> => {
   try {
     const key = `${LOCATIONS_KEY_PREFIX}${bookId}`;
     const json = await AsyncStorage.getItem(key);
     if (!json) return null;
 
     const locations = JSON.parse(json) as string[];
-    readerLog.debug(`Loaded ${locations.length} cached locations for book ${bookId}`);
+    readerLog.debug(
+      `Loaded ${locations.length} cached locations for book ${bookId}`,
+    );
     return locations;
   } catch (err) {
     readerLog.error("Error loading locations cache:", err);

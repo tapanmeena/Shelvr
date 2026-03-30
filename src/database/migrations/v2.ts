@@ -1,8 +1,14 @@
 import { dbLog } from "@/src/utils/logger";
 import { SQLiteDatabase } from "expo-sqlite";
 
-const columnExists = async (db: SQLiteDatabase, table: string, column: string): Promise<boolean> => {
-  const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+const columnExists = async (
+  db: SQLiteDatabase,
+  table: string,
+  column: string,
+): Promise<boolean> => {
+  const columns = await db.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(${table})`,
+  );
   return columns.some((col) => col.name === column);
 };
 

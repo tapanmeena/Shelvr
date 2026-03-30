@@ -24,7 +24,10 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -72,7 +75,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
             <Text style={styles.title}>Something Went Wrong</Text>
 
-            <Text style={styles.message}>The app encountered an unexpected error. You can try again or restart the app.</Text>
+            <Text style={styles.message}>
+              The app encountered an unexpected error. You can try again or
+              restart the app.
+            </Text>
 
             <Pressable style={styles.button} onPress={this.handleRetry}>
               <Ionicons name="refresh-outline" size={20} color="#fff" />
@@ -86,7 +92,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <Text style={styles.errorText}>
                   {this.state.error.name}: {this.state.error.message}
                 </Text>
-                {this.state.errorInfo?.componentStack && <Text style={styles.stackText}>{this.state.errorInfo.componentStack}</Text>}
+                {this.state.errorInfo?.componentStack && (
+                  <Text style={styles.stackText}>
+                    {this.state.errorInfo.componentStack}
+                  </Text>
+                )}
               </ScrollView>
             )}
           </View>

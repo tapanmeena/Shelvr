@@ -43,4 +43,8 @@ export const CREATE_INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_reading_progress_last_read ON reading_progress(last_read_at DESC);
 `;
 
-export const ALL_TABLES = [CREATE_BOOKS_TABLE, CREATE_READING_PROGRESS_TABLE, CREATE_INDEXES];
+export const ALL_TABLES = [
+  CREATE_BOOKS_TABLE,
+  CREATE_READING_PROGRESS_TABLE,
+  CREATE_INDEXES,
+];

@@ -20,7 +20,9 @@ const useLibrary = (): UseLibraryReturn => {
   const { isReady } = useDatabaseStatus();
   const setBooks = useLibraryStore((state) => state.setBooks);
   const setProgress = useLibraryStore((state) => state.setProgress);
-  const getBooksWithProgress = useLibraryStore((state) => state.getBooksWithProgress);
+  const getBooksWithProgress = useLibraryStore(
+    (state) => state.getBooksWithProgress,
+  );
 
   const loadBooks = useCallback(async () => {
     try {

@@ -6,17 +6,26 @@ export function useFileSystem() {
   const [file, setFile] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [downloading, setDownloading] = useState<boolean>(false);
-  const [size, setSize] = useState<number>(0);
+  // const [size, setSize] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
   const downloadFile = useCallback(async (fromUrl: string, toFile: string) => {
     const callback = (downloadProgress: DownloadProgressData) => {
-      const currentProgress = Math.round((downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100);
+      const currentProgress = Math.round(
+        (downloadProgress.totalBytesWritten /
+          downloadProgress.totalBytesExpectedToWrite) *
+          100,
+      );
       setProgress(currentProgress);
     };
 
-    const downloadResumable = ExpoFileSystem.createDownloadResumable(fromUrl, ExpoFileSystem.documentDirectory + toFile, { cache: true }, callback);
+    const downloadResumable = ExpoFileSystem.createDownloadResumable(
+      fromUrl,
+      ExpoFileSystem.documentDirectory + toFile,
+      { cache: true },
+      callback,
+    );
 
     setDownloading(true);
 
@@ -53,7 +62,8 @@ export function useFileSystem() {
     file,
     progress,
     downloading,
-    size,
+    // size,
+    size: 0,
     error,
     success,
     documentDirectory: ExpoFileSystem.documentDirectory,

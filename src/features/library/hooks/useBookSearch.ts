@@ -28,7 +28,9 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
       }
 
       // Search in authors
-      if (book.authors?.some((author) => author.toLowerCase().includes(query))) {
+      if (
+        book.authors?.some((author) => author.toLowerCase().includes(query))
+      ) {
         return true;
       }
 

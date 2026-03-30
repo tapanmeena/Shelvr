@@ -1,10 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
-import { THEME_COLORS, usePreferencesStore } from "@/src/stores/preferencesStore";
+import {
+  THEME_COLORS,
+  usePreferencesStore,
+} from "@/src/stores/preferencesStore";
 import type { Theme } from "@/src/types";
 
-const THEMES: { id: Theme; label: string; colors: (typeof THEME_COLORS)["light"] }[] = [
+const THEMES: {
+  id: Theme;
+  label: string;
+  colors: (typeof THEME_COLORS)["light"];
+}[] = [
   { id: "light", label: "Light", colors: THEME_COLORS.light },
   { id: "dark", label: "Dark", colors: THEME_COLORS.dark },
   { id: "sepia", label: "Sepia", colors: THEME_COLORS.sepia },
@@ -51,9 +64,29 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
               ]}
               onPress={() => handleChange(theme.id)}
             >
-              <View style={[styles.colorPreview, { backgroundColor: theme.colors.text }]} />
-              <Text style={[styles.optionLabel, { color: theme.colors.text }, isSelected && styles.optionLabelSelected]}>{theme.label}</Text>
-              {isSelected && <Ionicons name="checkmark-circle" size={18} color={colors.primary} style={styles.checkIcon} />}
+              <View
+                style={[
+                  styles.colorPreview,
+                  { backgroundColor: theme.colors.text },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.optionLabel,
+                  { color: theme.colors.text },
+                  isSelected && styles.optionLabelSelected,
+                ]}
+              >
+                {theme.label}
+              </Text>
+              {isSelected && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={18}
+                  color={colors.primary}
+                  style={styles.checkIcon}
+                />
+              )}
             </Pressable>
           );
         })}

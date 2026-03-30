@@ -57,7 +57,9 @@ export const useImportBook = (): UseImportBookReturn => {
       return true;
     } catch (err) {
       libraryLog.error("Import error:", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occured");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occured",
+      );
       return false;
     } finally {
       setIsImporting(false);

@@ -20,7 +20,15 @@ const WINDOW_SIZE = 5; // Number of items to render outside viewport
 const MAX_TO_RENDER_PER_BATCH = 10; // Items rendered per batch
 const INITIAL_NUM_TO_RENDER = 8; // Initial items to render
 
-export function BookGrid({ books, onBookPress, onBookLongPress, ListEmptyComponent, ListHeaderComponent, refreshing, onRefresh }: BookGridProps) {
+export function BookGrid({
+  books,
+  onBookPress,
+  onBookLongPress,
+  ListEmptyComponent,
+  ListHeaderComponent,
+  refreshing,
+  onRefresh,
+}: BookGridProps) {
   const { width } = useWindowDimensions();
 
   // Calculate columns based on screen width
@@ -48,14 +56,23 @@ export function BookGrid({ books, onBookPress, onBookLongPress, ListEmptyCompone
   const renderItem = useCallback(
     ({ item }: { item: BookWithProgress }) => (
       <View style={[styles.item, { width: columnWidth }]}>
-        <BookCard book={item} onPress={() => onBookPress(item)} onLongPress={onBookLongPress ? () => onBookLongPress(item) : undefined} />
+        <BookCard
+          book={item}
+          onPress={() => onBookPress(item)}
+          onLongPress={
+            onBookLongPress ? () => onBookLongPress(item) : undefined
+          }
+        />
       </View>
     ),
     [columnWidth, onBookPress, onBookLongPress],
   );
 
   // Memoize column wrapper style
-  const columnWrapperStyle = useMemo(() => (numColumns > 1 ? styles.row : undefined), [numColumns]);
+  const columnWrapperStyle = useMemo(
+    () => (numColumns > 1 ? styles.row : undefined),
+    [numColumns],
+  );
 
   return (
     <FlatList

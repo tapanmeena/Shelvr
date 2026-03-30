@@ -28,7 +28,9 @@ export const BookSchema = z
   .refine(
     (data) => {
       if (data.source === "komga") {
-        return data.komgaBookId !== undefined && data.komgaServerId !== undefined;
+        return (
+          data.komgaBookId !== undefined && data.komgaServerId !== undefined
+        );
       }
       return true;
     },
@@ -51,7 +53,14 @@ export const ReadingProgressSchema = z.object({
 // USER PREFERENCES
 export const ThemeSchema = z.enum(["light", "dark", "sepia"]);
 
-export const FontFamilySchema = z.enum(["system", "original", "georgia", "palatino", "bookerly", "openDyslexic"]);
+export const FontFamilySchema = z.enum([
+  "system",
+  "original",
+  "georgia",
+  "palatino",
+  "bookerly",
+  "openDyslexic",
+]);
 
 export const UserPreferencesSchema = z.object({
   theme: ThemeSchema,

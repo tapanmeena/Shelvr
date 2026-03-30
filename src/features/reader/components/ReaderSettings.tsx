@@ -1,5 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
 import { ThemePicker } from "@/src/components/ThemePicker";
 import { FontPicker } from "./FontPicker";
@@ -23,21 +30,33 @@ export function ReaderSettings({ onClose }: ReaderSettingsProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Reading Settings</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Reading Settings
+        </Text>
         <Pressable onPress={onClose} style={styles.closeButton}>
           <Ionicons name="close" size={24} color={colors.text} />
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <ThemePicker />
         <FontPicker />
         <FontSizeSlider />
         <LineSpacingSlider />
 
         <View style={styles.tip}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.text} />
-          <Text style={[styles.tipText, { color: colors.text }]}>Settings are applied instantly and saved automatically</Text>
+          <Ionicons
+            name="information-circle-outline"
+            size={20}
+            color={colors.text}
+          />
+          <Text style={[styles.tipText, { color: colors.text }]}>
+            Settings are applied instantly and saved automatically
+          </Text>
         </View>
       </ScrollView>
     </View>

@@ -1,5 +1,9 @@
 import * as FileSystem from "expo-file-system/legacy";
-import { consoleTransport, fileAsyncTransport, logger } from "react-native-logs";
+import {
+  consoleTransport,
+  fileAsyncTransport,
+  logger,
+} from "react-native-logs";
 const isDev = __DEV__;
 
 const log = logger.createLogger({

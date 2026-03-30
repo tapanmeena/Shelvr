@@ -12,10 +12,20 @@ import { BookWithProgress } from "@/src/types";
 import { formatFileSize } from "@/src/utils";
 import { libraryLog } from "@/src/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
-import { File } from "expo-file-system/next";
+import { File } from "expo-file-system";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActionSheetIOS, Alert, Platform, Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
+import {
+  ActionSheetIOS,
+  Alert,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LibraryScreen() {
@@ -37,13 +47,21 @@ export default function LibraryScreen() {
   if (!dbReady) {
     if (dbError) {
       return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-          <EmptyState icon="warning-outline" title="Database Error" message={dbError.message} />
+        <SafeAreaView
+          style={[styles.container, { backgroundColor: colors.background }]}
+        >
+          <EmptyState
+            icon="warning-outline"
+            title="Database Error"
+            message={dbError.message}
+          />
         </SafeAreaView>
       );
     }
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <LoadingSpinner fullScreen message="Loading library..." />
       </SafeAreaView>
     );
@@ -68,12 +86,20 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
   const [showSearch, setShowSearch] = useState(false);
 
   const { books, isLoading, error, refresh } = useLibrary();
-  const { isImporting, error: importError, importBook, clearError } = useImportBook();
-  const { searchQuery, setSearchQuery, filteredBooks, clearSearch } = useBookSearch(books);
+  const {
+    isImporting,
+    error: importError,
+    importBook,
+    clearError,
+  } = useImportBook();
+  const { searchQuery, setSearchQuery, filteredBooks, clearSearch } =
+    useBookSearch(books);
 
   // Delete modal state
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [bookToDelete, setBookToDelete] = useState<BookWithProgress | null>(null);
+  const [bookToDelete, setBookToDelete] = useState<BookWithProgress | null>(
+    null,
+  );
 
   const db = useDatabase();
   const removeBook = useLibraryStore((state) => state.removeBook);
@@ -113,29 +139,42 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
       );
     } else {
       // Android - use Alert
-      Alert.alert(book.title, `By: ${book.authors?.join(", ") || "Unknown Author"}`, [
-        { text: "Open", onPress: () => handleBookPress(book) },
-        { text: "Info", onPress: () => showBookInfo(book) },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => {
-            setBookToDelete(book);
-            setDeleteModalVisible(true);
+      Alert.alert(
+        book.title,
+        `By: ${book.authors?.join(", ") || "Unknown Author"}`,
+        [
+          { text: "Open", onPress: () => handleBookPress(book) },
+          { text: "Info", onPress: () => showBookInfo(book) },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: () => {
+              setBookToDelete(book);
+              setDeleteModalVisible(true);
+            },
           },
-        },
-        { text: "Cancel", style: "cancel" },
-      ]);
+          { text: "Cancel", style: "cancel" },
+        ],
+      );
     }
   };
 
   const showBookInfo = (book: BookWithProgress) => {
-    const progress = book.progress?.percentage ? `${Math.round(book.progress.percentage * 100)}% complete` : "Not started";
-    const source = book.source === "komga" ? "Downloaded from Komga" : "Imported locally";
+    const progress = book.progress?.percentage
+      ? `${Math.round(book.progress.percentage * 100)}% complete`
+      : "Not started";
+    const source =
+      book.source === "komga" ? "Downloaded from Komga" : "Imported locally";
 
     Alert.alert(
       book.title,
-      [book.authors?.join(", ") || "Unknown Author", "", progress, source, book.fileSize ? `Size: ${formatFileSize(book.fileSize)}` : ""]
+      [
+        book.authors?.join(", ") || "Unknown Author",
+        "",
+        progress,
+        source,
+        book.fileSize ? `Size: ${formatFileSize(book.fileSize)}` : "",
+      ]
         .filter(Boolean)
         .join("\n"),
     );
@@ -173,13 +212,18 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <EmptyState
           icon="alert-circle-outline"
           title="Error Loading Library"
           message={error}
           action={
-            <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={refresh}>
+            <Pressable
+              style={[styles.button, { backgroundColor: colors.primary }]}
+              onPress={refresh}
+            >
               <Text style={styles.buttonText}>Retry</Text>
             </Pressable>
           }
@@ -189,10 +233,18 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["bottom"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["bottom"]}
+    >
       {/* Search Bar */}
       {showSearch && (
-        <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <Ionicons name="search-outline" size={20} color={colors.subtext} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
@@ -243,10 +295,17 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
             <EmptyState
               icon="library-outline"
               title={searchQuery ? "No Results" : "Your Library is Empty"}
-              message={searchQuery ? `No books matching "${searchQuery}"` : "Import an ePUB file to get started"}
+              message={
+                searchQuery
+                  ? `No books matching "${searchQuery}"`
+                  : "Import an ePUB file to get started"
+              }
               action={
                 !searchQuery ? (
-                  <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleImport}>
+                  <Pressable
+                    style={[styles.button, { backgroundColor: colors.primary }]}
+                    onPress={handleImport}
+                  >
                     <Ionicons name="add" size={20} color="#fff" />
                     <Text style={styles.buttonText}>Import Book</Text>
                   </Pressable>
@@ -259,16 +318,30 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
 
       {/* FAB - Import Button */}
       <Pressable
-        style={[styles.fab, { backgroundColor: colors.primary }, isImporting && styles.fabDisabled]}
+        style={[
+          styles.fab,
+          { backgroundColor: colors.primary },
+          isImporting && styles.fabDisabled,
+        ]}
         onPress={handleImport}
         disabled={isImporting}
       >
-        {isImporting ? <LoadingSpinner size="small" /> : <Ionicons name="add" size={28} color="#fff" />}
+        {isImporting ? (
+          <LoadingSpinner size="small" />
+        ) : (
+          <Ionicons name="add" size={28} color="#fff" />
+        )}
       </Pressable>
 
       {/* Search Toggle */}
       {!showSearch && books.length > 0 && (
-        <Pressable style={[styles.searchFab, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowSearch(true)}>
+        <Pressable
+          style={[
+            styles.searchFab,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+          onPress={() => setShowSearch(true)}
+        >
           <Ionicons name="search-outline" size={24} color={colors.text} />
         </Pressable>
       )}

@@ -1,7 +1,13 @@
 import { runMigrations } from "@/src/database/migrations";
 import { dbLog } from "@/src/utils/logger";
 import { openDatabaseAsync, SQLiteDatabase } from "expo-sqlite";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 const DATABASE_NAME = "shelvr.db";
 
@@ -50,7 +56,11 @@ export const DatabaseProvider = ({ children }: DatabaseProviderProps) => {
         dbLog.info("Database ready");
       } catch (err) {
         dbLog.error("Initialized failed:", err);
-        setError(err instanceof Error ? err : new Error("Database initialization failed"));
+        setError(
+          err instanceof Error
+            ? err
+            : new Error("Database initialization failed"),
+        );
       }
     };
 
@@ -65,7 +75,11 @@ export const DatabaseProvider = ({ children }: DatabaseProviderProps) => {
     };
   }, []);
 
-  return <DatabaseContext.Provider value={{ db, isReady, error }}>{children}</DatabaseContext.Provider>;
+  return (
+    <DatabaseContext.Provider value={{ db, isReady, error }}>
+      {children}
+    </DatabaseContext.Provider>
+  );
 };
 
 // Hook for accessing the database

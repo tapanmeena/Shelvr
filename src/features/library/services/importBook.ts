@@ -1,4 +1,7 @@
-import { parseEpubMetadata, validateEpubFile } from "@/src/features/library/services/epubParser";
+import {
+  parseEpubMetadata,
+  validateEpubFile,
+} from "@/src/features/library/services/epubParser";
 import { PickedFile } from "@/src/features/library/services/filePicker";
 import { Book } from "@/src/types";
 import { libraryLog } from "@/src/utils/logger";
@@ -31,7 +34,9 @@ const ensureBooksDirectory = async (): Promise<void> => {
 };
 
 // Import ePUB file into the library
-export const importBook = async (pickedFile: PickedFile): Promise<ImportResult> => {
+export const importBook = async (
+  pickedFile: PickedFile,
+): Promise<ImportResult> => {
   try {
     // Validate the ePUB file
     const validation = await validateEpubFile(pickedFile.uri);
@@ -72,7 +77,9 @@ export const importBook = async (pickedFile: PickedFile): Promise<ImportResult> 
       try {
         const coversDirInfo = await FileSystem.getInfoAsync(COVERS_DIRECTORY);
         if (!coversDirInfo.exists) {
-          await FileSystem.makeDirectoryAsync(COVERS_DIRECTORY, { intermediates: true });
+          await FileSystem.makeDirectoryAsync(COVERS_DIRECTORY, {
+            intermediates: true,
+          });
         }
 
         const ext = metadata.coverMimeType?.includes("png") ? "png" : "jpg";

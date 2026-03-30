@@ -50,7 +50,11 @@ export const useLibraryStore = create<LibraryStore>()(
 
       updateBook: (id, updates) =>
         set((state) => ({
-          books: state.books.map((book) => (book.id === id ? { ...book, ...updates, updatedAt: Date.now() } : book)),
+          books: state.books.map((book) =>
+            book.id === id
+              ? { ...book, ...updates, updatedAt: Date.now() }
+              : book,
+          ),
           lastUpdated: Date.now(),
         })),
 

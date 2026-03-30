@@ -1,4 +1,8 @@
-import { CREATE_BOOKS_TABLE, CREATE_INDEXES, CREATE_READING_PROGRESS_TABLE } from "@/src/database/schema";
+import {
+  CREATE_BOOKS_TABLE,
+  CREATE_INDEXES,
+  CREATE_READING_PROGRESS_TABLE,
+} from "@/src/database/schema";
 import { dbLog } from "@/src/utils/logger";
 import { SQLiteDatabase } from "expo-sqlite";
 

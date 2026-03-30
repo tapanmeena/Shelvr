@@ -10,15 +10,20 @@ interface FontSizeSliderProps {
   max?: number;
 }
 
-export function FontSizeSlider({ value, onChange, min = 12, max = 32 }: FontSizeSliderProps) {
+export function FontSizeSlider({
+  value,
+  onChange,
+  min = 12,
+  max = 32,
+}: FontSizeSliderProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const currentSize = usePreferencesStore((state) => state.fontSize);
-  const setFontSize = usePreferencesStore((state) => state.setFontSize);
+  // const setFontSize = usePreferencesStore((state) => state.setFontSize);
 
   const selectedSize = value ?? currentSize;
-  const handleChange = onChange ?? setFontSize;
+  // const handleChange = onChange ?? setFontSize;
 
   const colors = {
     text: isDark ? "#eaeaea" : "#1a1a2e",
@@ -31,7 +36,9 @@ export function FontSizeSlider({ value, onChange, min = 12, max = 32 }: FontSize
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: colors.text }]}>Font Size</Text>
-        <Text style={[styles.value, { color: colors.primary }]}>{selectedSize}px</Text>
+        <Text style={[styles.value, { color: colors.primary }]}>
+          {selectedSize}px
+        </Text>
       </View>
       <View style={styles.sliderContainer}>
         <Text style={[styles.previewSmall, { color: colors.subtext }]}>A</Text>

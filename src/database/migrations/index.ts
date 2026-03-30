@@ -36,7 +36,9 @@ export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
   await db.execAsync(CREATE_MIGRATIONS_TABLE);
 
   // Get current version
-  const result = await db.getFirstAsync<{ version: number }>("SELECT MAX(version) as version FROM schema_migrations");
+  const result = await db.getFirstAsync<{ version: number }>(
+    "SELECT MAX(version) as version FROM schema_migrations",
+  );
   const currentVersion = result?.version ?? 0; // 0 means, initial table creation
 
   dbLog.info(`Curretn schema version: ${currentVersion}`);
@@ -50,11 +52,10 @@ export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
         await migration.migrate(db);
 
         // Record the migration
-        await db.runAsync("INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)", [
-          migration.version,
-          migration.name,
-          Date.now(),
-        ]);
+        await db.runAsync(
+          "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
+          [migration.version, migration.name, Date.now()],
+        );
 
         dbLog.info(`Migration v${migration.version} completed successfully`);
       } catch (error) {

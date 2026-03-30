@@ -10,15 +10,20 @@ interface LineSpacingSliderProps {
   max?: number;
 }
 
-export function LineSpacingSlider({ value, onChange, min = 1.0, max = 2.5 }: LineSpacingSliderProps) {
+export function LineSpacingSlider({
+  value,
+  onChange,
+  min = 1.0,
+  max = 2.5,
+}: LineSpacingSliderProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const currentSpacing = usePreferencesStore((state) => state.lineSpacing);
-  const setLineSpacing = usePreferencesStore((state) => state.setLineSpacing);
+  // const setLineSpacing = usePreferencesStore((state) => state.setLineSpacing);
 
   const selectedSpacing = value ?? currentSpacing;
-  const handleChange = onChange ?? setLineSpacing;
+  // const handleChange = onChange ?? setLineSpacing;
 
   const colors = {
     text: isDark ? "#eaeaea" : "#1a1a2e",
@@ -31,12 +36,20 @@ export function LineSpacingSlider({ value, onChange, min = 1.0, max = 2.5 }: Lin
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: colors.text }]}>Line Spacing</Text>
-        <Text style={[styles.value, { color: colors.primary }]}>{selectedSpacing.toFixed(1)}</Text>
+        <Text style={[styles.value, { color: colors.primary }]}>
+          {selectedSpacing.toFixed(1)}
+        </Text>
       </View>
       <View style={styles.sliderContainer}>
         <View style={styles.previewCompact}>
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
-          <View style={[styles.line, styles.lineNarrow, { backgroundColor: colors.subtext }]} />
+          <View
+            style={[
+              styles.line,
+              styles.lineNarrow,
+              { backgroundColor: colors.subtext },
+            ]}
+          />
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
         </View>
         {/* <Slider
@@ -52,7 +65,13 @@ export function LineSpacingSlider({ value, onChange, min = 1.0, max = 2.5 }: Lin
         /> */}
         <View style={styles.previewWide}>
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
-          <View style={[styles.line, styles.lineWide, { backgroundColor: colors.subtext }]} />
+          <View
+            style={[
+              styles.line,
+              styles.lineWide,
+              { backgroundColor: colors.subtext },
+            ]}
+          />
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
         </View>
       </View>

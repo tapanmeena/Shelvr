@@ -1,6 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentProps } from "react";
-import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
@@ -13,7 +19,14 @@ export interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({ icon = "albums-outline", title, message, action, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({
+  icon = "albums-outline",
+  title,
+  message,
+  action,
+  actionLabel,
+  onAction,
+}: EmptyStateProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -28,10 +41,17 @@ export function EmptyState({ icon = "albums-outline", title, message, action, ac
     <View style={styles.container}>
       <Ionicons name={icon} size={64} color={colors.icon} style={styles.icon} />
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-      {message && <Text style={[styles.message, { color: colors.subtext }]}>{message}</Text>}
+      {message && (
+        <Text style={[styles.message, { color: colors.subtext }]}>
+          {message}
+        </Text>
+      )}
       {action && <View style={styles.action}>{action}</View>}
       {actionLabel && onAction && (
-        <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={onAction}>
+        <Pressable
+          style={[styles.button, { backgroundColor: colors.primary }]}
+          onPress={onAction}
+        >
           <Text style={styles.buttonText}>{actionLabel}</Text>
         </Pressable>
       )}

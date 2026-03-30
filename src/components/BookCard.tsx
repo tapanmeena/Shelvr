@@ -1,5 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
 import type { BookWithProgress } from "@/src/types";
 
@@ -53,17 +60,34 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.container, { backgroundColor: colors.card, borderColor: colors.border }, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.container,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        pressed && styles.pressed,
+      ]}
       onPress={onPress}
       onLongPress={onLongPress}
     >
       <View style={styles.coverContainer}>
         {book.coverPath ? (
-          <Image source={{ uri: `file://${book.coverPath}` }} style={styles.cover} resizeMode="cover" />
+          <Image
+            source={{ uri: `file://${book.coverPath}` }}
+            style={styles.cover}
+            resizeMode="cover"
+          />
         ) : (
-          <View style={[styles.placeholderCover, { backgroundColor: getPlaceholderColor(book.title) }]}>
+          <View
+            style={[
+              styles.placeholderCover,
+              { backgroundColor: getPlaceholderColor(book.title) },
+            ]}
+          >
             <View style={styles.placeholderContent}>
-              <Ionicons name="book-outline" size={28} color="rgba(255,255,255,0.7)" />
+              <Ionicons
+                name="book-outline"
+                size={28}
+                color="rgba(255,255,255,0.7)"
+              />
               <Text style={styles.placeholderTitle} numberOfLines={3}>
                 {book.title}
               </Text>
@@ -77,13 +101,23 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
         )}
         {/* Komga badge */}
         {isKomgaBook && (
-          <View style={[styles.komgaBadge, { backgroundColor: colors.komgaBadge }]}>
+          <View
+            style={[styles.komgaBadge, { backgroundColor: colors.komgaBadge }]}
+          >
             <Ionicons name="cloud-download-outline" size={12} color="#fff" />
           </View>
         )}
         {hasProgress && (
           <View style={styles.progressOverlay}>
-            <View style={[styles.progressBar, { width: `${progressPercentage * 100}%`, backgroundColor: colors.progress }]} />
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  width: `${progressPercentage * 100}%`,
+                  backgroundColor: colors.progress,
+                },
+              ]}
+            />
           </View>
         )}
       </View>
@@ -93,11 +127,18 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
           {book.title}
         </Text>
         {book.authors && book.authors.length > 0 && (
-          <Text style={[styles.author, { color: colors.subtext }]} numberOfLines={1}>
+          <Text
+            style={[styles.author, { color: colors.subtext }]}
+            numberOfLines={1}
+          >
             {book.authors.join(", ")}
           </Text>
         )}
-        {hasProgress && <Text style={[styles.progress, { color: colors.progress }]}>{(progressPercentage * 100).toFixed(2)}%</Text>}
+        {hasProgress && (
+          <Text style={[styles.progress, { color: colors.progress }]}>
+            {(progressPercentage * 100).toFixed(2)}%
+          </Text>
+        )}
       </View>
     </Pressable>
   );

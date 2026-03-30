@@ -1,7 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
-import { FONT_FAMILY_MAP, usePreferencesStore } from "@/src/stores/preferencesStore";
+import {
+  FONT_FAMILY_MAP,
+  usePreferencesStore,
+} from "@/src/stores/preferencesStore";
 import type { FontFamily } from "@/src/types";
 
 const FONTS: { id: FontFamily; label: string; preview: string }[] = [
@@ -38,7 +48,11 @@ export function FontPicker({ value, onChange }: FontPickerProps) {
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.text }]}>Font</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {FONTS.map((font) => {
           const isSelected = selectedFont === font.id;
           return (
@@ -54,11 +68,32 @@ export function FontPicker({ value, onChange }: FontPickerProps) {
               ]}
               onPress={() => handleChange(font.id)}
             >
-              <Text style={[styles.preview, { color: colors.text, fontFamily: FONT_FAMILY_MAP[font.id] }]}>{font.preview}</Text>
-              <Text style={[styles.optionLabel, { color: colors.subtext }, isSelected && { color: colors.primary }]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.preview,
+                  { color: colors.text, fontFamily: FONT_FAMILY_MAP[font.id] },
+                ]}
+              >
+                {font.preview}
+              </Text>
+              <Text
+                style={[
+                  styles.optionLabel,
+                  { color: colors.subtext },
+                  isSelected && { color: colors.primary },
+                ]}
+                numberOfLines={1}
+              >
                 {font.label}
               </Text>
-              {isSelected && <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={styles.checkIcon} />}
+              {isSelected && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={16}
+                  color={colors.primary}
+                  style={styles.checkIcon}
+                />
+              )}
             </Pressable>
           );
         })}

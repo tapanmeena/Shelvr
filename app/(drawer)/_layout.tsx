@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { DrawerContentScrollView, DrawerItemList } from "@react-navigation/drawer";
+import {
+  DrawerContentScrollView,
+  DrawerItemList,
+} from "@react-navigation/drawer";
 import * as Application from "expo-application";
 import { Drawer } from "expo-router/drawer";
 import { ComponentProps } from "react";
@@ -7,10 +10,13 @@ import { StyleSheet, Text, useColorScheme, View } from "react-native";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-const DRAWER_ITEMS: { name: string; title: string; icon: IconName }[] = [{ name: "index", title: "Library", icon: "library-outline" }];
+const DRAWER_ITEMS: { name: string; title: string; icon: IconName }[] = [
+  { name: "index", title: "Library", icon: "library-outline" },
+];
 
 const appName = Application.applicationName;
-const appVersion = Application.nativeApplicationVersion + " | " + Application.nativeBuildVersion;
+const appVersion =
+  Application.nativeApplicationVersion + " | " + Application.nativeBuildVersion;
 
 const CustomDrawerContent = (props: any) => {
   const colorScheme = useColorScheme();
@@ -70,7 +76,9 @@ export default function DrawerLayout() {
           name={item.name}
           options={{
             title: item.title,
-            drawerIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name={item.icon} size={size} color={color} />,
+            drawerIcon: ({ color, size }: { color: string; size: number }) => (
+              <Ionicons name={item.icon} size={size} color={color} />
+            ),
           }}
         />
       ))}

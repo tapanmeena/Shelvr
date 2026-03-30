@@ -22,14 +22,21 @@ export const saveProgress = async (
   };
 
   await repository.upsertReadingProgress(db, progress);
-  readerLog.debug(`Saved progress for book ${bookId}: ${(percentage * 100).toFixed(2)}%`);
+  readerLog.debug(
+    `Saved progress for book ${bookId}: ${(percentage * 100).toFixed(2)}%`,
+  );
 };
 
 // Load reading progress from db
-export const loadProgress = async (db: SQLiteDatabase, bookId: string): Promise<ReadingProgress | null> => {
+export const loadProgress = async (
+  db: SQLiteDatabase,
+  bookId: string,
+): Promise<ReadingProgress | null> => {
   const progress = await repository.getReadingProgress(db, bookId);
   if (progress) {
-    readerLog.debug(`Loaded progress for book ${bookId}: ${(progress.percentage * 100).toFixed(2)}%`);
+    readerLog.debug(
+      `Loaded progress for book ${bookId}: ${(progress.percentage * 100).toFixed(2)}%`,
+    );
   }
   return progress;
 };

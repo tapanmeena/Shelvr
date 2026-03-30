@@ -44,18 +44,29 @@ export type EpubErrorCode =
   | "UNKNOWN_ERROR";
 
 const EPUB_ERROR_MESSAGES: Record<EpubErrorCode, string> = {
-  FILE_NOT_FOUND: "The ePUB file could not be found. It may have been moved or deleted.",
-  FILE_TOO_SMALL: "This file is too small to be a valid ePUB. It may be corrupted or incomplete.",
-  INVALID_EXTENSION: "This file is not an ePUB. Please select a file with the .epub extension.",
-  CORRUPTED_ARCHIVE: "This ePUB file appears to be corrupted. Try re-downloading or obtaining a new copy.",
-  MISSING_CONTAINER: "This ePUB is missing required structure files. It may be an unsupported format.",
-  MISSING_CONTENT: "This ePUB is missing its content file. It may be an incomplete or damaged file.",
-  INVALID_STRUCTURE: "This ePUB has an invalid structure. It may be an unsupported or non-standard format.",
+  FILE_NOT_FOUND:
+    "The ePUB file could not be found. It may have been moved or deleted.",
+  FILE_TOO_SMALL:
+    "This file is too small to be a valid ePUB. It may be corrupted or incomplete.",
+  INVALID_EXTENSION:
+    "This file is not an ePUB. Please select a file with the .epub extension.",
+  CORRUPTED_ARCHIVE:
+    "This ePUB file appears to be corrupted. Try re-downloading or obtaining a new copy.",
+  MISSING_CONTAINER:
+    "This ePUB is missing required structure files. It may be an unsupported format.",
+  MISSING_CONTENT:
+    "This ePUB is missing its content file. It may be an incomplete or damaged file.",
+  INVALID_STRUCTURE:
+    "This ePUB has an invalid structure. It may be an unsupported or non-standard format.",
   PERMISSION_DENIED: "Cannot access this file. Please check file permissions.",
-  UNKNOWN_ERROR: "An unexpected error occurred while reading this ePUB. Please try again.",
+  UNKNOWN_ERROR:
+    "An unexpected error occurred while reading this ePUB. Please try again.",
 };
 
-const RECOVERABLE_ERRORS = new Set<EpubErrorCode>(["PERMISSION_DENIED", "UNKNOWN_ERROR"]);
+const RECOVERABLE_ERRORS = new Set<EpubErrorCode>([
+  "PERMISSION_DENIED",
+  "UNKNOWN_ERROR",
+]);
 
 /**
  * Validation result with detailed error information
@@ -100,15 +111,29 @@ function getAllTagContents(xml: string, tagName: string): string[] {
 }
 
 /** Get an attribute value from the first matching tag */
-function getTagAttribute(xml: string, tagName: string, attrName: string): string | undefined {
-  const re = new RegExp(`<${tagName}[^>]*\\s${attrName}=["']([^"']*)["'][^>]*\\/?>`, "i");
+function getTagAttribute(
+  xml: string,
+  tagName: string,
+  attrName: string,
+): string | undefined {
+  const re = new RegExp(
+    `<${tagName}[^>]*\\s${attrName}=["']([^"']*)["'][^>]*\\/?>`,
+    "i",
+  );
   const match = xml.match(re);
   return match?.[1];
 }
 
 /** Find all <item> elements and return them as objects */
-function parseManifestItems(xml: string): { id: string; href: string; mediaType: string; properties?: string }[] {
-  const items: { id: string; href: string; mediaType: string; properties?: string }[] = [];
+function parseManifestItems(
+  xml: string,
+): { id: string; href: string; mediaType: string; properties?: string }[] {
+  const items: {
+    id: string;
+    href: string;
+    mediaType: string;
+    properties?: string;
+  }[] = [];
   const re = /<item\s[^>]*>/gi;
   let match;
   while ((match = re.exec(xml)) !== null) {
@@ -127,8 +152,14 @@ function parseManifestItems(xml: string): { id: string; href: string; mediaType:
 /** Get the content attribute of a <meta> tag by its name attribute */
 function getMetaContent(xml: string, metaName: string): string | undefined {
   // <meta name="calibre:series" content="Lord of Mysteries"/>
-  const re1 = new RegExp(`<meta[^>]*name=["']${metaName}["'][^>]*content=["']([^"']*)["'][^>]*/?>`, "i");
-  const re2 = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*name=["']${metaName}["'][^>]*/?>`, "i");
+  const re1 = new RegExp(
+    `<meta[^>]*name=["']${metaName}["'][^>]*content=["']([^"']*)["'][^>]*/?>`,
+    "i",
+  );
+  const re2 = new RegExp(
+    `<meta[^>]*content=["']([^"']*)["'][^>]*name=["']${metaName}["'][^>]*/?>`,
+    "i",
+  );
   const match = xml.match(re1) || xml.match(re2);
   return match?.[1];
 }
@@ -143,8 +174,12 @@ function stripHtml(html: string): string {
 
 // ── Main parser ──
 
-export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> => {
-  const fallbackTitle = (epubUri.split("/").pop() || "Unknown").replace(/\.epub$/i, "").replace(/_/g, " ");
+export const parseEpubMetadata = async (
+  epubUri: string,
+): Promise<EpubMetadata> => {
+  const fallbackTitle = (epubUri.split("/").pop() || "Unknown")
+    .replace(/\.epub$/i, "")
+    .replace(/_/g, " ");
 
   try {
     // Read the epub file as base64 and load with JSZip
@@ -175,7 +210,9 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
     }
 
     const opfXml = await opfFile.async("text");
-    const opfDir = opfPath.includes("/") ? opfPath.substring(0, opfPath.lastIndexOf("/") + 1) : "";
+    const opfDir = opfPath.includes("/")
+      ? opfPath.substring(0, opfPath.lastIndexOf("/") + 1)
+      : "";
 
     // 3. Extract metadata
     const title = getTagContent(opfXml, "title") || fallbackTitle;
@@ -207,12 +244,14 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
 
     // Strategy B: EPUB 3 <meta property="belongs-to-collection">
     if (!metadata.series) {
-      const collectionRe = /<meta[^>]*property=["']belongs-to-collection["'][^>]*>([^<]+)<\/meta>/i;
+      const collectionRe =
+        /<meta[^>]*property=["']belongs-to-collection["'][^>]*>([^<]+)<\/meta>/i;
       const collectionMatch = opfXml.match(collectionRe);
       if (collectionMatch?.[1]) {
         metadata.series = collectionMatch[1].trim();
         // Look for group-position for the index
-        const posRe = /<meta[^>]*property=["']group-position["'][^>]*>([^<]+)<\/meta>/i;
+        const posRe =
+          /<meta[^>]*property=["']group-position["'][^>]*>([^<]+)<\/meta>/i;
         const posMatch = opfXml.match(posRe);
         if (posMatch?.[1]) {
           const idx = parseFloat(posMatch[1].trim());
@@ -225,7 +264,9 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
     const manifestItems = parseManifestItems(opfXml);
 
     // Strategy A: <item properties="cover-image"> (EPUB 3)
-    let coverItem = manifestItems.find((item) => item.properties?.includes("cover-image"));
+    let coverItem = manifestItems.find((item) =>
+      item.properties?.includes("cover-image"),
+    );
 
     // Strategy B: <item properties="cover">
     if (!coverItem) {
@@ -234,9 +275,12 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
 
     // Strategy C: <meta name="cover" content="cover-id" /> → find item by id (EPUB 2)
     if (!coverItem) {
-      const coverMetaRe = /<meta[^>]*name=["']cover["'][^>]*content=["']([^"']*)["'][^>]*\/?>/i;
-      const coverMetaRe2 = /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']cover["'][^>]*\/?>/i;
-      const coverMetaMatch = opfXml.match(coverMetaRe) || opfXml.match(coverMetaRe2);
+      const coverMetaRe =
+        /<meta[^>]*name=["']cover["'][^>]*content=["']([^"']*)["'][^>]*\/?>/i;
+      const coverMetaRe2 =
+        /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']cover["'][^>]*\/?>/i;
+      const coverMetaMatch =
+        opfXml.match(coverMetaRe) || opfXml.match(coverMetaRe2);
       if (coverMetaMatch?.[1]) {
         const coverId = coverMetaMatch[1];
         coverItem = manifestItems.find((item) => item.id === coverId);
@@ -245,26 +289,36 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
 
     // Strategy D: common cover item id patterns
     if (!coverItem) {
-      coverItem = manifestItems.find((item) => item.mediaType.startsWith("image/") && /^(cover|cover-image|coverimage)$/i.test(item.id));
+      coverItem = manifestItems.find(
+        (item) =>
+          item.mediaType.startsWith("image/") &&
+          /^(cover|cover-image|coverimage)$/i.test(item.id),
+      );
     }
 
     if (coverItem) {
       try {
         const decodedHref = decodeURIComponent(coverItem.href);
-        const coverPath = decodedHref.startsWith("/") ? decodedHref.slice(1) : `${opfDir}${decodedHref}`;
+        const coverPath = decodedHref.startsWith("/")
+          ? decodedHref.slice(1)
+          : `${opfDir}${decodedHref}`;
         const coverFile = zip.file(coverPath);
         if (coverFile) {
           const coverData = await coverFile.async("base64");
           metadata.coverBase64 = coverData;
           metadata.coverMimeType = coverItem.mediaType;
-          libraryLog.debug(`Extracted cover image (${coverItem.mediaType}) from ${coverPath}`);
+          libraryLog.debug(
+            `Extracted cover image (${coverItem.mediaType}) from ${coverPath}`,
+          );
         }
       } catch (err) {
         libraryLog.warn("Failed to extract cover image:", err);
       }
     }
 
-    libraryLog.info(`Parsed epub metadata: "${title}" by ${authors.join(", ") || "unknown"}`);
+    libraryLog.info(
+      `Parsed epub metadata: "${title}" by ${authors.join(", ") || "unknown"}`,
+    );
     return metadata;
   } catch (error) {
     libraryLog.error("Error parsing ePUB metadata:", error);
@@ -272,7 +326,9 @@ export const parseEpubMetadata = async (epubUri: string): Promise<EpubMetadata> 
   }
 };
 
-export const validateEpubFile = async (epubUri: string): Promise<EpubValidationResult> => {
+export const validateEpubFile = async (
+  epubUri: string,
+): Promise<EpubValidationResult> => {
   const warnings: string[] = [];
 
   try {
@@ -281,7 +337,10 @@ export const validateEpubFile = async (epubUri: string): Promise<EpubValidationR
     if (!fileInfo.exists) {
       return {
         valid: false,
-        error: new EpubParseError("FILE_NOT_FOUND", `File not found: ${epubUri}`),
+        error: new EpubParseError(
+          "FILE_NOT_FOUND",
+          `File not found: ${epubUri}`,
+        ),
       };
     }
 
@@ -289,7 +348,10 @@ export const validateEpubFile = async (epubUri: string): Promise<EpubValidationR
     if (!epubUri.toLowerCase().endsWith(".epub")) {
       return {
         valid: false,
-        error: new EpubParseError("INVALID_EXTENSION", `Invalid extension: ${epubUri}`),
+        error: new EpubParseError(
+          "INVALID_EXTENSION",
+          `Invalid extension: ${epubUri}`,
+        ),
       };
     }
 
@@ -301,12 +363,17 @@ export const validateEpubFile = async (epubUri: string): Promise<EpubValidationR
       if (fileInfo.size < MIN_EPUB_SIZE) {
         return {
           valid: false,
-          error: new EpubParseError("FILE_TOO_SMALL", `File size ${fileInfo.size} bytes is too small`),
+          error: new EpubParseError(
+            "FILE_TOO_SMALL",
+            `File size ${fileInfo.size} bytes is too small`,
+          ),
         };
       }
 
       if (fileInfo.size > MAX_EPUB_SIZE) {
-        warnings.push("This is a very large ePUB file and may take longer to load.");
+        warnings.push(
+          "This is a very large ePUB file and may take longer to load.",
+        );
       }
     }
 
@@ -319,7 +386,10 @@ export const validateEpubFile = async (epubUri: string): Promise<EpubValidationR
 
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
+    if (
+      errorMessage.includes("permission") ||
+      errorMessage.includes("Permission")
+    ) {
       return {
         valid: false,
         error: new EpubParseError("PERMISSION_DENIED", errorMessage),

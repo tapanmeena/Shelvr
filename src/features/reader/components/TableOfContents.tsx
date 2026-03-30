@@ -1,7 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
+import {
+  LayoutChangeEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface TocItem {
@@ -37,13 +46,21 @@ function filterToc(items: TocItem[], query: string): TocItem[] {
     const matchesSelf = item.label.toLowerCase().includes(lower);
     const filteredSubs = item.subitems ? filterToc(item.subitems, query) : [];
     if (matchesSelf || filteredSubs.length > 0) {
-      acc.push({ ...item, subitems: matchesSelf ? item.subitems : filteredSubs });
+      acc.push({
+        ...item,
+        subitems: matchesSelf ? item.subitems : filteredSubs,
+      });
     }
     return acc;
   }, []);
 }
 
-export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClose }: TableOfContentsProps) => {
+export const TableOfContents = ({
+  items,
+  currentChapter,
+  onSelectChapter,
+  onClose,
+}: TableOfContentsProps) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,7 +127,10 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
     if (hasScrolled.current) return;
     hasScrolled.current = true;
     const y = event.nativeEvent.layout.y;
-    scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 120), animated: true });
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, y - 120),
+      animated: true,
+    });
   }, []);
 
   const handleSelect = useCallback(
@@ -130,27 +150,52 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
     const shouldHighlight = isActive || isActiveParent;
 
     return (
-      <View key={item.id || item.href} onLayout={isActive ? handleActiveLayout : undefined}>
+      <View
+        key={item.id || item.href}
+        onLayout={isActive ? handleActiveLayout : undefined}
+      >
         <Pressable
           style={({ pressed }) => [
             styles.item,
             { paddingLeft: 20 + depth * 16 },
-            shouldHighlight && [styles.itemActive, { backgroundColor: colors.active }],
+            shouldHighlight && [
+              styles.itemActive,
+              { backgroundColor: colors.active },
+            ],
             pressed && styles.itemPressed,
           ]}
           onPress={() => handleSelect(item.href)}
           android_ripple={{ color: colors.active, borderless: false }}
         >
           {/* Left accent bar for active item or active parent */}
-          {shouldHighlight && <View style={[styles.activeBar, { backgroundColor: colors.primary }]} />}
+          {shouldHighlight && (
+            <View
+              style={[styles.activeBar, { backgroundColor: colors.primary }]}
+            />
+          )}
 
           {/* Status indicator */}
           {isPast && !shouldHighlight ? (
-            <Ionicons name="checkmark-circle" size={16} color={colors.pastCheck} style={styles.statusIcon} />
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={colors.pastCheck}
+              style={styles.statusIcon}
+            />
           ) : isActive ? (
-            <Ionicons name="radio-button-on" size={14} color={colors.primary} style={styles.statusIcon} />
+            <Ionicons
+              name="radio-button-on"
+              size={14}
+              color={colors.primary}
+              style={styles.statusIcon}
+            />
           ) : isActiveParent ? (
-            <Ionicons name="ellipsis-horizontal-circle" size={16} color={colors.primary} style={styles.statusIcon} />
+            <Ionicons
+              name="ellipsis-horizontal-circle"
+              size={16}
+              color={colors.primary}
+              style={styles.statusIcon}
+            />
           ) : (
             <View style={[styles.statusDot, { borderColor: colors.border }]} />
           )}
@@ -160,7 +205,13 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
             style={[
               styles.itemText,
               isTopLevel && styles.itemTextTopLevel,
-              { color: shouldHighlight ? colors.primary : isPast ? colors.subtext : colors.text },
+              {
+                color: shouldHighlight
+                  ? colors.primary
+                  : isPast
+                    ? colors.subtext
+                    : colors.text,
+              },
               shouldHighlight && styles.itemTextActive,
               !isTopLevel && styles.itemTextSub,
             ]}
@@ -169,7 +220,9 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
           </Text>
 
           {isActive && (
-            <View style={[styles.activeBadge, { backgroundColor: colors.primary }]}>
+            <View
+              style={[styles.activeBadge, { backgroundColor: colors.primary }]}
+            >
               <Text style={styles.activeBadgeText}>Reading</Text>
             </View>
           )}
@@ -181,7 +234,10 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
       {/* Drag handle */}
       <View style={styles.dragHandleContainer}>
         <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
@@ -195,9 +251,14 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onClose();
           }}
-          style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
+          style={({ pressed }) => [
+            styles.closeButton,
+            pressed && styles.closeButtonPressed,
+          ]}
         >
-          <View style={[styles.closeCircle, { backgroundColor: colors.searchBg }]}>
+          <View
+            style={[styles.closeCircle, { backgroundColor: colors.searchBg }]}
+          >
             <Ionicons name="close" size={18} color={colors.subtext} />
           </View>
         </Pressable>
@@ -206,7 +267,12 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
       {/* Search bar */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchBar, { backgroundColor: colors.searchBg }]}>
-          <Ionicons name="search" size={16} color={colors.searchPlaceholder} style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={16}
+            color={colors.searchPlaceholder}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={[styles.searchInput, { color: colors.searchText }]}
             placeholder="Search chapters..."
@@ -218,7 +284,11 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <Ionicons name="close-circle" size={16} color={colors.searchPlaceholder} />
+              <Ionicons
+                name="close-circle"
+                size={16}
+                color={colors.searchPlaceholder}
+              />
             </Pressable>
           )}
         </View>
@@ -237,10 +307,18 @@ export const TableOfContents = ({ items, currentChapter, onSelectChapter, onClos
       >
         {filteredItems.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="document-text-outline" size={48} color={colors.border} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{searchQuery ? "No matches found" : "No table of contents"}</Text>
+            <Ionicons
+              name="document-text-outline"
+              size={48}
+              color={colors.border}
+            />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {searchQuery ? "No matches found" : "No table of contents"}
+            </Text>
             <Text style={[styles.emptyText, { color: colors.subtext }]}>
-              {searchQuery ? "Try a different search term" : "This book doesn't have a table of contents"}
+              {searchQuery
+                ? "Try a different search term"
+                : "This book doesn't have a table of contents"}
             </Text>
           </View>
         ) : (

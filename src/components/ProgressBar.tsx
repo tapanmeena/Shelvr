@@ -7,7 +7,12 @@ interface ProgressBarProps {
   color?: string;
 }
 
-export function ProgressBar({ progress, height = 4, showBackground = true, color }: ProgressBarProps) {
+export function ProgressBar({
+  progress,
+  height = 4,
+  showBackground = true,
+  color,
+}: ProgressBarProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -19,7 +24,13 @@ export function ProgressBar({ progress, height = 4, showBackground = true, color
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   return (
-    <View style={[styles.container, { height }, showBackground && { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        { height },
+        showBackground && { backgroundColor: colors.background },
+      ]}
+    >
       <View
         style={[
           styles.fill,

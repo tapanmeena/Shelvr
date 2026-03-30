@@ -3,16 +3,27 @@ import type { SQLiteDatabase } from "expo-sqlite";
 
 // Books
 export const getAllBooks = async (db: SQLiteDatabase): Promise<Book[]> => {
-  const rows = await db.getAllAsync<BookRow>("SELECT * FROM books ORDER BY updated_at DESC");
+  const rows = await db.getAllAsync<BookRow>(
+    "SELECT * FROM books ORDER BY updated_at DESC",
+  );
   return rows.map(rowToBook);
 };
 
-export const getBookById = async (db: SQLiteDatabase, id: string): Promise<Book | null> => {
-  const row = await db.getFirstAsync<BookRow>("SELECT * FROM books WHERE id = ?", [id]);
+export const getBookById = async (
+  db: SQLiteDatabase,
+  id: string,
+): Promise<Book | null> => {
+  const row = await db.getFirstAsync<BookRow>(
+    "SELECT * FROM books WHERE id = ?",
+    [id],
+  );
   return row ? rowToBook(row) : null;
 };
 
-export const searchBooks = async (db: SQLiteDatabase, query: string): Promise<Book[]> => {
+export const searchBooks = async (
+  db: SQLiteDatabase,
+  query: string,
+): Promise<Book[]> => {
   const searchPattern = `%${query}%`;
   const rows = await db.getAllAsync<BookRow>(
     `SELECT * FROM books
@@ -23,7 +34,10 @@ export const searchBooks = async (db: SQLiteDatabase, query: string): Promise<Bo
   return rows.map(rowToBook);
 };
 
-export const insertBook = async (db: SQLiteDatabase, book: Book): Promise<void> => {
+export const insertBook = async (
+  db: SQLiteDatabase,
+  book: Book,
+): Promise<void> => {
   await db.runAsync(
     `INSERT INTO books (
       id, title, authors, description, cover_path, file_path, source,
@@ -52,7 +66,11 @@ export const insertBook = async (db: SQLiteDatabase, book: Book): Promise<void> 
   );
 };
 
-export const updateBook = async (db: SQLiteDatabase, id: string, updates: Partial<Book>): Promise<void> => {
+export const updateBook = async (
+  db: SQLiteDatabase,
+  id: string,
+  updates: Partial<Book>,
+): Promise<void> => {
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
 
@@ -94,20 +112,35 @@ export const updateBook = async (db: SQLiteDatabase, id: string, updates: Partia
   values.push(id);
 
   if (fields.length > 1) {
-    await db.runAsync(`UPDATE books SET ${fields.join(", ")} WHERE id = ?`, values);
+    await db.runAsync(
+      `UPDATE books SET ${fields.join(", ")} WHERE id = ?`,
+      values,
+    );
   }
 };
 
-export const deleteBook = async (db: SQLiteDatabase, id: string): Promise<void> => {
+export const deleteBook = async (
+  db: SQLiteDatabase,
+  id: string,
+): Promise<void> => {
   await db.runAsync("DELETE FROM books WHERE id = ?", [id]);
 };
 
-export const getReadingProgress = async (db: SQLiteDatabase, bookId: string): Promise<ReadingProgress | null> => {
-  const row = await db.getFirstAsync<ReadingProgressRow>("SELECT * FROM reading_progress WHERE book_id = ?", [bookId]);
+export const getReadingProgress = async (
+  db: SQLiteDatabase,
+  bookId: string,
+): Promise<ReadingProgress | null> => {
+  const row = await db.getFirstAsync<ReadingProgressRow>(
+    "SELECT * FROM reading_progress WHERE book_id = ?",
+    [bookId],
+  );
   return row ? rowToReadingProgress(row) : null;
 };
 
-export const upsertReadingProgress = async (db: SQLiteDatabase, progress: Omit<ReadingProgress, "id">): Promise<void> => {
+export const upsertReadingProgress = async (
+  db: SQLiteDatabase,
+  progress: Omit<ReadingProgress, "id">,
+): Promise<void> => {
   await db.runAsync(
     `INSERT INTO reading_progress (
       book_id, cfi, percentage, chapter, chapter_title, last_read_at
@@ -118,7 +151,14 @@ export const upsertReadingProgress = async (db: SQLiteDatabase, progress: Omit<R
       chapter = excluded.chapter,
       chapter_title = excluded.chapter_title,
       last_read_at = excluded.last_read_at`,
-    [progress.bookId, progress.cfi ?? null, progress.percentage, progress.chapter ?? null, progress.chapterTitle ?? null, progress.lastReadAt],
+    [
+      progress.bookId,
+      progress.cfi ?? null,
+      progress.percentage,
+      progress.chapter ?? null,
+      progress.chapterTitle ?? null,
+      progress.lastReadAt,
+    ],
   );
 };
 

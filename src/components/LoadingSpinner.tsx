@@ -1,4 +1,10 @@
-import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
 interface LoadingSpinnerProps {
   size?: "small" | "large";
@@ -6,7 +12,11 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-export function LoadingSpinner({ size = "large", message, fullScreen = false }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  size = "large",
+  message,
+  fullScreen = false,
+}: LoadingSpinnerProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -19,12 +29,18 @@ export function LoadingSpinner({ size = "large", message, fullScreen = false }: 
   const content = (
     <View style={styles.content}>
       <ActivityIndicator size={size} color={colors.spinner} />
-      {message && <Text style={[styles.message, { color: colors.text }]}>{message}</Text>}
+      {message && (
+        <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
+      )}
     </View>
   );
 
   if (fullScreen) {
-    return <View style={[styles.fullScreen, { backgroundColor: colors.background }]}>{content}</View>;
+    return (
+      <View style={[styles.fullScreen, { backgroundColor: colors.background }]}>
+        {content}
+      </View>
+    );
   }
 
   return content;
