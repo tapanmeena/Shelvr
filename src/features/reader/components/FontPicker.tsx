@@ -1,17 +1,11 @@
-import { Ionicons } from "@expo/vector-icons";
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
-
-import {
+  useThemeColors,
   FONT_FAMILY_MAP,
   usePreferencesStore,
 } from "@/src/stores/preferencesStore";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
 import type { FontFamily } from "@/src/types";
 
 const FONTS: { id: FontFamily; label: string; preview: string }[] = [
@@ -28,8 +22,7 @@ interface FontPickerProps {
 }
 
 export function FontPicker({ value, onChange }: FontPickerProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const currentFont = usePreferencesStore((state) => state.fontFamily);
   const setFontFamily = usePreferencesStore((state) => state.setFontFamily);
@@ -38,11 +31,11 @@ export function FontPicker({ value, onChange }: FontPickerProps) {
   const handleChange = onChange ?? setFontFamily;
 
   const colors = {
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    primary: "#e94560",
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    border: themeColors.border,
+    background: themeColors.background,
+    primary: themeColors.accent,
   };
 
   return (

@@ -1,12 +1,7 @@
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentProps } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
@@ -27,14 +22,13 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const colors = {
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    icon: isDark ? "#4a5568" : "#a0aec0",
-    primary: "#e94560",
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    icon: themeColors.textSecondary,
+    primary: themeColors.accent,
   };
 
   return (

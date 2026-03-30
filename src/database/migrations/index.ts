@@ -1,5 +1,6 @@
 import { runMigrationV1 } from "@/src/database/migrations/v1";
 import { runMigrationV2 } from "@/src/database/migrations/v2";
+import { runMigrationV3 } from "@/src/database/migrations/v3";
 import { dbLog } from "@/src/utils/logger";
 import { SQLiteDatabase } from "expo-sqlite";
 
@@ -19,6 +20,11 @@ const migrations: MigrationInfo[] = [
     version: 2,
     name: "add_series_fields",
     migrate: runMigrationV2,
+  },
+  {
+    version: 3,
+    name: "add_shelves",
+    migrate: runMigrationV3,
   },
 ];
 

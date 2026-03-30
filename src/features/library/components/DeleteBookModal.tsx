@@ -13,11 +13,11 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import type { Book } from "@/src/types";
 
 interface DeleteBookModalProps {
@@ -33,20 +33,19 @@ export function DeleteBookModal({
   onConfirm,
   onCancel,
 }: DeleteBookModalProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteFile, setDeleteFile] = useState(false);
 
   const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    card: isDark ? "#16213e" : "#f8f9fa",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-    danger: "#dc2626",
-    success: "#22c55e",
+    background: themeColors.background,
+    card: themeColors.card,
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    primary: themeColors.accent,
+    border: themeColors.border,
+    danger: themeColors.error,
+    success: themeColors.success,
   };
 
   const handleConfirm = async () => {

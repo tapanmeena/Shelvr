@@ -1,10 +1,13 @@
 import {
   DEFAULT_PREFERENCES,
   FontFamily,
+  LibraryViewMode,
   Theme,
   UserPreferences,
 } from "@/src/types";
+import { type AccentColorName, accentColors, palettes } from "@/src/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useMemo } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -14,10 +17,13 @@ interface PreferencesState extends UserPreferences {
 
 interface PreferencesActions {
   setTheme: (theme: Theme) => void;
+  setAccentColor: (accentColor: AccentColorName) => void;
   setFontSize: (size: number) => void;
   setFontFamily: (family: FontFamily) => void;
   setLineSpacing: (spacing: number) => void;
+  setLibraryViewMode: (mode: LibraryViewMode) => void;
   setLastOpenedBook: (bookId: string | undefined) => void;
+  setHasCompletedOnboarding: (completed: boolean) => void;
   reset: () => void;
   setHydrated: (isHydrated: boolean) => void;
 }
@@ -32,6 +38,8 @@ export const usePreferencesStore = create<PreferncesStore>()(
 
       setTheme: (theme) => set({ theme }),
 
+      setAccentColor: (accentColor) => set({ accentColor }),
+
       setFontSize: (fontSize) => {
         const clamped = Math.min(32, Math.max(12, fontSize));
         set({ fontSize: clamped });
@@ -45,7 +53,12 @@ export const usePreferencesStore = create<PreferncesStore>()(
         set({ lineSpacing: clamped });
       },
 
+      setLibraryViewMode: (libraryViewMode) => set({ libraryViewMode }),
+
       setLastOpenedBook: (lastOpenedBookId) => set({ lastOpenedBookId }),
+
+      setHasCompletedOnboarding: (hasCompletedOnboarding) =>
+        set({ hasCompletedOnboarding }),
 
       reset: () => set(DEFAULT_PREFERENCES),
 
@@ -56,10 +69,13 @@ export const usePreferencesStore = create<PreferncesStore>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         theme: state.theme,
+        accentColor: state.accentColor,
         fontSize: state.fontSize,
         fontFamily: state.fontFamily,
         lineSpacing: state.lineSpacing,
+        libraryViewMode: state.libraryViewMode,
         lastOpenedBookId: state.lastOpenedBookId,
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
@@ -81,56 +97,68 @@ export const FONT_FAMILY_MAP: Record<FontFamily, string> = {
 };
 
 /**
- * Extended theme color palettes for app-wide use
+ * Extended theme color palettes for app-wide use.
+ * Resolves the active palette + accent color combination.
  */
 export interface ThemeColors {
   background: string;
   surface: string;
+  surfaceHover: string;
   text: string;
   textSecondary: string;
   accent: string;
+  accentLight: string;
+  accentDark: string;
   primary: string;
   border: string;
+  borderFocus: string;
+  overlay: string;
+  card: string;
   success: string;
   warning: string;
   error: string;
 }
 
-export const THEME_COLORS: Record<Theme, ThemeColors> = {
-  light: {
-    background: "#ffffff",
-    surface: "#f5f5f5",
-    text: "#1a1a2e",
-    textSecondary: "#666666",
-    accent: "#e94560",
-    primary: "#e94560",
-    border: "#e0e0e0",
-    success: "#4caf50",
-    warning: "#ff9800",
-    error: "#f44336",
-  },
-  dark: {
-    background: "#1a1a2e",
-    surface: "#252540",
-    text: "#eaeaea",
-    textSecondary: "#a0a0a0",
-    accent: "#e94560",
-    primary: "#e94560",
-    border: "#3a3a5a",
-    success: "#66bb6a",
-    warning: "#ffa726",
-    error: "#ef5350",
-  },
-  sepia: {
-    background: "#f4ecd8",
-    surface: "#ebe3cf",
-    text: "#5c4b37",
-    textSecondary: "#8b7355",
-    accent: "#8b4513",
-    primary: "#8b4513",
-    border: "#d4c9b5",
-    success: "#6b8e23",
-    warning: "#cd853f",
-    error: "#cd5c5c",
-  },
-};
+export function getThemeColors(
+  theme: Theme,
+  accent: AccentColorName = "coral",
+): ThemeColors {
+  const palette = palettes[theme];
+  const a = accentColors[accent];
+  return {
+    background: palette.background,
+    surface: palette.surface,
+    surfaceHover: palette.surfaceHover,
+    text: palette.text,
+    textSecondary: palette.textSecondary,
+    accent: a.accent,
+    accentLight: a.accentLight,
+    accentDark: a.accentDark,
+    primary: a.accent,
+    border: palette.border,
+    borderFocus: palette.borderFocus,
+    overlay: palette.overlay,
+    card: palette.card,
+    success: palette.success,
+    warning: palette.warning,
+    error: palette.error,
+  };
+}
+
+/**
+ * Hook to get current resolved theme colors.
+ */
+export function useThemeColors(): ThemeColors {
+  const theme = usePreferencesStore((s) => s.theme);
+  const accent = usePreferencesStore((s) => s.accentColor) as AccentColorName;
+  return useMemo(() => getThemeColors(theme, accent), [theme, accent]);
+}
+
+/**
+ * Get the combined Tamagui theme name: e.g. "dark_indigo"
+ */
+export function useTamaguiThemeName(): string {
+  const theme = usePreferencesStore((s) => s.theme);
+  const accent = usePreferencesStore((s) => s.accentColor) as AccentColorName;
+  return `${theme}_${accent}`;
+}

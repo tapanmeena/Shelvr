@@ -1,10 +1,5 @@
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { useThemeColors } from "@/src/stores/preferencesStore";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 interface LoadingSpinnerProps {
   size?: "small" | "large";
@@ -17,13 +12,12 @@ export function LoadingSpinner({
   message,
   fullScreen = false,
 }: LoadingSpinnerProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    text: isDark ? "#a0a0a0" : "#666666",
-    spinner: "#e94560",
+    background: themeColors.background,
+    text: themeColors.textSecondary,
+    spinner: themeColors.accent,
   };
 
   const content = (

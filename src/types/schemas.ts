@@ -51,7 +51,7 @@ export const ReadingProgressSchema = z.object({
 });
 
 // USER PREFERENCES
-export const ThemeSchema = z.enum(["light", "dark", "sepia"]);
+export const ThemeSchema = z.enum(["light", "dark", "sepia", "midnight"]);
 
 export const FontFamilySchema = z.enum([
   "system",
@@ -62,13 +62,31 @@ export const FontFamilySchema = z.enum([
   "openDyslexic",
 ]);
 
+export const AccentColorSchema = z.enum([
+  "coral",
+  "amber",
+  "terracotta",
+  "sage",
+  "wine",
+  "indigo",
+  "teal",
+  "rose",
+  "sky",
+  "violet",
+]);
+
+export const LibraryViewModeSchema = z.enum(["grid", "list"]);
+
 export const UserPreferencesSchema = z.object({
   theme: ThemeSchema,
+  accentColor: AccentColorSchema,
   fontSize: z.number().min(12).max(32),
   fontFamily: FontFamilySchema,
   lineSpacing: z.number().min(1.0).max(2.5),
+  libraryViewMode: LibraryViewModeSchema,
   reopenLastBookOnLaunch: z.boolean(),
   lastOpenedBookId: optionalString,
+  hasCompletedOnboarding: z.boolean(),
 });
 
 export type BookSource = z.infer<typeof BookSourceSchema>;
@@ -76,4 +94,29 @@ export type Book = z.infer<typeof BookSchema>;
 export type ReadingProgress = z.infer<typeof ReadingProgressSchema>;
 export type Theme = z.infer<typeof ThemeSchema>;
 export type FontFamily = z.infer<typeof FontFamilySchema>;
+export type AccentColor = z.infer<typeof AccentColorSchema>;
+export type LibraryViewMode = z.infer<typeof LibraryViewModeSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
+
+// Shelf
+export const ShelfSchema = z.object({
+  id: z.uuidv4(),
+  name: z.string().min(1).max(100),
+  description: optionalString,
+  icon: optionalString,
+  color: optionalString,
+  sortOrder: z.number().int(),
+  isSmart: z.boolean(),
+  smartFilter: optionalString,
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export const BookShelfSchema = z.object({
+  bookId: z.uuidv4(),
+  shelfId: z.uuidv4(),
+  addedAt: z.number(),
+});
+
+export type Shelf = z.infer<typeof ShelfSchema>;
+export type BookShelf = z.infer<typeof BookShelfSchema>;

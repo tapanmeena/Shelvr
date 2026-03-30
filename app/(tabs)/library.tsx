@@ -8,6 +8,7 @@ import { useBookSearch } from "@/src/features/library/hooks/useBookSearch";
 import { useImportBook } from "@/src/features/library/hooks/useImportBook";
 import useLibrary from "@/src/features/library/hooks/useLibrary";
 import { useLibraryStore } from "@/src/stores/libraryStore";
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { BookWithProgress } from "@/src/types";
 import { formatFileSize } from "@/src/utils";
 import { libraryLog } from "@/src/utils/logger";
@@ -23,27 +24,14 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LibraryScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-
+  const colors = useThemeColors();
   const { isReady: dbReady, error: dbError } = useDatabaseStatus();
 
-  const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    card: isDark ? "#16213e" : "#f8f9fa",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-  };
-
-  // Show loading while database initializes
   if (!dbReady) {
     if (dbError) {
       return (
@@ -67,22 +55,12 @@ export default function LibraryScreen() {
     );
   }
 
-  return <LibraryContent colors={colors} />;
+  return <LibraryContent />;
 }
 
-interface LibraryContentProps {
-  colors: {
-    background: string;
-    card: string;
-    text: string;
-    subtext: string;
-    primary: string;
-    border: string;
-  };
-}
-
-const LibraryContent = ({ colors }: LibraryContentProps) => {
+const LibraryContent = () => {
   const router = useRouter();
+  const colors = useThemeColors();
   const [showSearch, setShowSearch] = useState(false);
 
   const { books, isLoading, error, refresh } = useLibrary();
@@ -138,7 +116,6 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
         },
       );
     } else {
-      // Android - use Alert
       Alert.alert(
         book.title,
         `By: ${book.authors?.join(", ") || "Unknown Author"}`,
@@ -184,13 +161,9 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
     if (!bookToDelete) return;
 
     try {
-      // Delete from database
       await repository.deleteBook(db, bookToDelete.id);
-
-      // Delete from store
       removeBook(bookToDelete.id);
 
-      // Optionally delete file
       if (deleteFile && bookToDelete.filePath) {
         try {
           const file = new File(bookToDelete.filePath);
@@ -235,48 +208,67 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["bottom"]}
+      edges={["top"]}
     >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Library
+        </Text>
+        {books.length > 0 && (
+          <Pressable onPress={() => setShowSearch(!showSearch)} hitSlop={8}>
+            <Ionicons
+              name={showSearch ? "close" : "search-outline"}
+              size={24}
+              color={colors.text}
+            />
+          </Pressable>
+        )}
+      </View>
+
       {/* Search Bar */}
       {showSearch && (
         <View
           style={[
             styles.searchContainer,
-            { backgroundColor: colors.card, borderColor: colors.border },
+            { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          <Ionicons name="search-outline" size={20} color={colors.subtext} />
+          <Ionicons
+            name="search-outline"
+            size={20}
+            color={colors.textSecondary}
+          />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search by title or author..."
-            placeholderTextColor={colors.subtext}
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoFocus
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={clearSearch}>
-              <Ionicons name="close-circle" size={20} color={colors.subtext} />
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={colors.textSecondary}
+              />
             </Pressable>
           )}
-          <Pressable
-            onPress={() => {
-              clearSearch();
-              setShowSearch(false);
-            }}
-            style={styles.searchClose}
-          >
-            <Text style={{ color: colors.primary }}>Cancel</Text>
-          </Pressable>
         </View>
       )}
 
       {/* Import Error */}
       {importError && (
-        <View style={[styles.errorBanner, { backgroundColor: "#f8d7da" }]}>
-          <Text style={styles.errorText}>{importError}</Text>
+        <View
+          style={[styles.errorBanner, { backgroundColor: colors.error + "1A" }]}
+        >
+          <Text style={[styles.errorText, { color: colors.error }]}>
+            {importError}
+          </Text>
           <Pressable onPress={clearError}>
-            <Ionicons name="close" size={20} color="#721c24" />
+            <Ionicons name="close" size={20} color={colors.error} />
           </Pressable>
         </View>
       )}
@@ -333,19 +325,6 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
         )}
       </Pressable>
 
-      {/* Search Toggle */}
-      {!showSearch && books.length > 0 && (
-        <Pressable
-          style={[
-            styles.searchFab,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-          onPress={() => setShowSearch(true)}
-        >
-          <Ionicons name="search-outline" size={24} color={colors.text} />
-        </Pressable>
-      )}
-
       {/* Delete Book Modal */}
       <DeleteBookModal
         visible={deleteModalVisible}
@@ -362,31 +341,40 @@ const LibraryContent = ({ colors }: LibraryContentProps) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    margin: 16,
-    marginBottom: 0,
+    marginHorizontal: 16,
+    marginBottom: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
     gap: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    paddingVertical: 4,
-  },
-  searchClose: {
-    paddingLeft: 8,
+    paddingVertical: 2,
   },
   button: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 8,
   },
   buttonText: {
@@ -416,30 +404,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    margin: 16,
-    marginBottom: 0,
+    marginHorizontal: 16,
+    marginBottom: 8,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   errorText: {
     flex: 1,
-    color: "#721c24",
     fontSize: 14,
-  },
-  searchFab: {
-    position: "absolute",
-    right: 20,
-    bottom: 90,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
   },
 });

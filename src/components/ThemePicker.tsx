@@ -1,80 +1,83 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
-  THEME_COLORS,
   usePreferencesStore,
+  useThemeColors,
 } from "@/src/stores/preferencesStore";
+import {
+  ACCENT_COLOR_NAMES,
+  accentColors,
+  type AccentColorName,
+  palettes,
+} from "@/src/theme";
 import type { Theme } from "@/src/types";
 
-const THEMES: {
-  id: Theme;
-  label: string;
-  colors: (typeof THEME_COLORS)["light"];
-}[] = [
-  { id: "light", label: "Light", colors: THEME_COLORS.light },
-  { id: "dark", label: "Dark", colors: THEME_COLORS.dark },
-  { id: "sepia", label: "Sepia", colors: THEME_COLORS.sepia },
+const THEMES: { id: Theme; label: string }[] = [
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+  { id: "sepia", label: "Sepia" },
+  { id: "midnight", label: "Midnight" },
 ];
 
 interface ThemePickerProps {
   value?: Theme;
   onChange?: (theme: Theme) => void;
+  accentValue?: AccentColorName;
+  onAccentChange?: (accent: AccentColorName) => void;
+  showAccents?: boolean;
 }
 
-export function ThemePicker({ value, onChange }: ThemePickerProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+export function ThemePicker({
+  value,
+  onChange,
+  accentValue,
+  onAccentChange,
+  showAccents = true,
+}: ThemePickerProps) {
+  const colors = useThemeColors();
 
   const currentTheme = usePreferencesStore((state) => state.theme);
   const setTheme = usePreferencesStore((state) => state.setTheme);
+  const currentAccent = usePreferencesStore(
+    (state) => state.accentColor,
+  ) as AccentColorName;
+  const setAccentColor = usePreferencesStore((state) => state.setAccentColor);
 
   const selectedTheme = value ?? currentTheme;
-  const handleChange = onChange ?? setTheme;
-
-  const colors = {
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-    primary: "#e94560",
-  };
+  const handleThemeChange = onChange ?? setTheme;
+  const selectedAccent = accentValue ?? currentAccent;
+  const handleAccentChange = onAccentChange ?? setAccentColor;
 
   return (
     <View style={styles.container}>
+      {/* Theme selection */}
       <Text style={[styles.label, { color: colors.text }]}>Theme</Text>
-      <View style={styles.options}>
+      <View style={styles.themeOptions}>
         {THEMES.map((theme) => {
           const isSelected = selectedTheme === theme.id;
+          const palette = palettes[theme.id];
           return (
             <Pressable
               key={theme.id}
               style={[
-                styles.option,
+                styles.themeOption,
                 {
-                  backgroundColor: theme.colors.background,
-                  borderColor: isSelected ? colors.primary : colors.border,
+                  backgroundColor: palette.background,
+                  borderColor: isSelected ? colors.accent : colors.border,
                   borderWidth: isSelected ? 2 : 1,
                 },
               ]}
-              onPress={() => handleChange(theme.id)}
+              onPress={() => handleThemeChange(theme.id)}
             >
               <View
-                style={[
-                  styles.colorPreview,
-                  { backgroundColor: theme.colors.text },
-                ]}
+                style={[styles.colorPreview, { backgroundColor: palette.text }]}
               />
               <Text
                 style={[
-                  styles.optionLabel,
-                  { color: theme.colors.text },
-                  isSelected && styles.optionLabelSelected,
+                  styles.themeLabel,
+                  { color: palette.text },
+                  isSelected && styles.themeLabelSelected,
                 ]}
               >
                 {theme.label}
@@ -83,7 +86,7 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
                 <Ionicons
                   name="checkmark-circle"
                   size={18}
-                  color={colors.primary}
+                  color={colors.accent}
                   style={styles.checkIcon}
                 />
               )}
@@ -91,6 +94,39 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
           );
         })}
       </View>
+
+      {/* Accent color selection */}
+      {showAccents && (
+        <>
+          <Text style={[styles.label, { color: colors.text, marginTop: 20 }]}>
+            Accent Color
+          </Text>
+          <View style={styles.accentGrid}>
+            {ACCENT_COLOR_NAMES.map((name) => {
+              const isSelected = selectedAccent === name;
+              const accent = accentColors[name];
+              return (
+                <Pressable
+                  key={name}
+                  style={[
+                    styles.accentCircle,
+                    { backgroundColor: accent.accent },
+                    isSelected && {
+                      borderWidth: 3,
+                      borderColor: colors.text,
+                    },
+                  ]}
+                  onPress={() => handleAccentChange(name)}
+                >
+                  {isSelected && (
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -106,13 +142,13 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  options: {
+  themeOptions: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
   },
-  option: {
+  themeOption: {
     flex: 1,
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     alignItems: "center",
   },
@@ -122,16 +158,28 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
   },
-  optionLabel: {
-    fontSize: 13,
+  themeLabel: {
+    fontSize: 12,
     fontWeight: "500",
   },
-  optionLabelSelected: {
-    fontWeight: "600",
+  themeLabelSelected: {
+    fontWeight: "700",
   },
   checkIcon: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: 6,
+    right: 6,
+  },
+  accentGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  accentCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

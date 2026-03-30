@@ -5,6 +5,7 @@ import {
   TableOfContents,
 } from "@/src/features/reader/components";
 import { useReader } from "@/src/features/reader/hooks/useReader";
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { readerLog } from "@/src/utils/logger";
 import {
   ReaderProvider,
@@ -14,20 +15,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useRef, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ReaderScreen = () => {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const [showHeader, setShowHeader] = useState(true);
   const [showToc, setShowToc] = useState(false);
@@ -48,11 +41,11 @@ const ReaderScreen = () => {
   const lastCfiRef = useRef("");
 
   const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    headerBg: isDark ? "rgba(26, 26, 46, 0.95)" : "rgba(255, 255, 255, 0.95)",
+    background: themeColors.background,
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    primary: themeColors.accent,
+    headerBg: themeColors.overlay,
   };
 
   const handleClose = () => {

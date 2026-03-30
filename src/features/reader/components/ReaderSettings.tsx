@@ -1,12 +1,6 @@
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ThemePicker } from "@/src/components/ThemePicker";
 import { FontPicker } from "./FontPicker";
@@ -18,14 +12,7 @@ interface ReaderSettingsProps {
 }
 
 export function ReaderSettings({ onClose }: ReaderSettingsProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-
-  const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-  };
+  const colors = useThemeColors();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -52,9 +39,9 @@ export function ReaderSettings({ onClose }: ReaderSettingsProps) {
           <Ionicons
             name="information-circle-outline"
             size={20}
-            color={colors.text}
+            color={colors.textSecondary}
           />
-          <Text style={[styles.tipText, { color: colors.text }]}>
+          <Text style={[styles.tipText, { color: colors.textSecondary }]}>
             Settings are applied instantly and saved automatically
           </Text>
         </View>

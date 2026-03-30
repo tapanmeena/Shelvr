@@ -1,7 +1,10 @@
 // import Slider from "@react-native-community/slider";
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import { usePreferencesStore } from "@/src/stores/preferencesStore";
+import {
+  usePreferencesStore,
+  useThemeColors,
+} from "@/src/stores/preferencesStore";
 
 interface FontSizeSliderProps {
   value?: number;
@@ -16,8 +19,7 @@ export function FontSizeSlider({
   min = 12,
   max = 32,
 }: FontSizeSliderProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const currentSize = usePreferencesStore((state) => state.fontSize);
   // const setFontSize = usePreferencesStore((state) => state.setFontSize);
@@ -26,10 +28,10 @@ export function FontSizeSlider({
   // const handleChange = onChange ?? setFontSize;
 
   const colors = {
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    track: isDark ? "#4a5568" : "#e2e8f0",
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    primary: themeColors.accent,
+    track: themeColors.border,
   };
 
   return (

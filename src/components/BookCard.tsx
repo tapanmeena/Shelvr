@@ -1,12 +1,6 @@
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { BookWithProgress } from "@/src/types";
 
@@ -42,15 +36,14 @@ function getPlaceholderColor(title: string): string {
 }
 
 export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const colors = {
-    card: isDark ? "#16213e" : "#f8f9fa",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-    progress: "#e94560",
+    card: themeColors.card,
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    border: themeColors.border,
+    progress: themeColors.accent,
     komgaBadge: "#0ea5e9", // Sky blue for Komga
   };
 

@@ -1,7 +1,10 @@
 // import Slider from "@react-native-community/slider";
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import { usePreferencesStore } from "@/src/stores/preferencesStore";
+import {
+  usePreferencesStore,
+  useThemeColors,
+} from "@/src/stores/preferencesStore";
 
 interface LineSpacingSliderProps {
   value?: number;
@@ -16,8 +19,7 @@ export function LineSpacingSlider({
   min = 1.0,
   max = 2.5,
 }: LineSpacingSliderProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const currentSpacing = usePreferencesStore((state) => state.lineSpacing);
   // const setLineSpacing = usePreferencesStore((state) => state.setLineSpacing);
@@ -26,10 +28,10 @@ export function LineSpacingSlider({
   // const handleChange = onChange ?? setLineSpacing;
 
   const colors = {
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    track: isDark ? "#4a5568" : "#e2e8f0",
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    primary: themeColors.accent,
+    track: themeColors.border,
   };
 
   return (

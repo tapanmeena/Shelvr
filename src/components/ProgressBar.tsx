@@ -1,4 +1,5 @@
-import { StyleSheet, View, useColorScheme } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { useThemeColors } from "@/src/stores/preferencesStore";
 
 interface ProgressBarProps {
   progress: number; // 0-100
@@ -13,12 +14,11 @@ export function ProgressBar({
   showBackground = true,
   color,
 }: ProgressBarProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
 
   const colors = {
-    background: isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)",
-    fill: color ?? "#e94560",
+    background: themeColors.border,
+    fill: color ?? themeColors.accent,
   };
 
   const clampedProgress = Math.min(100, Math.max(0, progress));

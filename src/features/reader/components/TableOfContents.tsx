@@ -1,3 +1,4 @@
+import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -8,7 +9,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,21 +61,20 @@ export const TableOfContents = ({
   onSelectChapter,
   onClose,
 }: TableOfContentsProps) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const themeColors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState("");
 
   const colors = {
-    background: isDark ? "#1a1a2e" : "#ffffff",
-    text: isDark ? "#eaeaea" : "#1a1a2e",
-    subtext: isDark ? "#a0a0a0" : "#666666",
-    primary: "#e94560",
-    border: isDark ? "#2d3748" : "#e2e8f0",
-    active: isDark ? "rgba(233, 69, 96, 0.15)" : "rgba(233, 69, 96, 0.08)",
-    searchBg: isDark ? "#242445" : "#f1f3f5",
-    searchText: isDark ? "#eaeaea" : "#1a1a2e",
-    searchPlaceholder: isDark ? "#666" : "#999",
-    pastCheck: isDark ? "#4ade80" : "#22c55e",
+    background: themeColors.background,
+    text: themeColors.text,
+    subtext: themeColors.textSecondary,
+    primary: themeColors.accent,
+    border: themeColors.border,
+    active: themeColors.accentLight + "26",
+    searchBg: themeColors.surface,
+    searchText: themeColors.text,
+    searchPlaceholder: themeColors.textSecondary,
+    pastCheck: themeColors.success,
   };
 
   const scrollViewRef = useRef<ScrollView>(null);

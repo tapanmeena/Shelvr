@@ -1,4 +1,4 @@
-import { Book, ReadingProgress } from "@/src/types";
+import { Book, BookShelf, ReadingProgress, Shelf } from "@/src/types";
 import type { SQLiteDatabase } from "expo-sqlite";
 
 // Books
@@ -225,4 +225,195 @@ const rowToReadingProgress = (row: ReadingProgressRow): ReadingProgress => {
     chapterTitle: row.chapter_title ?? undefined,
     lastReadAt: row.last_read_at,
   };
+};
+
+// Shelves
+
+interface ShelfRow {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  sort_order: number;
+  is_smart: number;
+  smart_filter: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+interface BookShelfRow {
+  book_id: string;
+  shelf_id: string;
+  added_at: number;
+}
+
+const rowToShelf = (row: ShelfRow): Shelf => ({
+  id: row.id,
+  name: row.name,
+  description: row.description ?? undefined,
+  icon: row.icon ?? undefined,
+  color: row.color ?? undefined,
+  sortOrder: row.sort_order,
+  isSmart: row.is_smart === 1,
+  smartFilter: row.smart_filter ?? undefined,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+const rowToBookShelf = (row: BookShelfRow): BookShelf => ({
+  bookId: row.book_id,
+  shelfId: row.shelf_id,
+  addedAt: row.added_at,
+});
+
+export const getShelves = async (db: SQLiteDatabase): Promise<Shelf[]> => {
+  const rows = await db.getAllAsync<ShelfRow>(
+    "SELECT * FROM shelves ORDER BY sort_order ASC, created_at ASC",
+  );
+  return rows.map(rowToShelf);
+};
+
+export const getShelfById = async (
+  db: SQLiteDatabase,
+  id: string,
+): Promise<Shelf | null> => {
+  const row = await db.getFirstAsync<ShelfRow>(
+    "SELECT * FROM shelves WHERE id = ?",
+    [id],
+  );
+  return row ? rowToShelf(row) : null;
+};
+
+export const createShelf = async (
+  db: SQLiteDatabase,
+  shelf: Shelf,
+): Promise<void> => {
+  await db.runAsync(
+    `INSERT INTO shelves (
+      id, name, description, icon, color, sort_order,
+      is_smart, smart_filter, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      shelf.id,
+      shelf.name,
+      shelf.description ?? null,
+      shelf.icon ?? null,
+      shelf.color ?? null,
+      shelf.sortOrder,
+      shelf.isSmart ? 1 : 0,
+      shelf.smartFilter ?? null,
+      shelf.createdAt,
+      shelf.updatedAt,
+    ],
+  );
+};
+
+export const updateShelf = async (
+  db: SQLiteDatabase,
+  id: string,
+  updates: Partial<
+    Pick<Shelf, "name" | "description" | "icon" | "color" | "sortOrder">
+  >,
+): Promise<void> => {
+  const fields: string[] = [];
+  const values: (string | number | null)[] = [];
+
+  if (updates.name !== undefined) {
+    fields.push("name = ?");
+    values.push(updates.name);
+  }
+  if (updates.description !== undefined) {
+    fields.push("description = ?");
+    values.push(updates.description ?? null);
+  }
+  if (updates.icon !== undefined) {
+    fields.push("icon = ?");
+    values.push(updates.icon ?? null);
+  }
+  if (updates.color !== undefined) {
+    fields.push("color = ?");
+    values.push(updates.color ?? null);
+  }
+  if (updates.sortOrder !== undefined) {
+    fields.push("sort_order = ?");
+    values.push(updates.sortOrder);
+  }
+
+  fields.push("updated_at = ?");
+  values.push(Date.now());
+  values.push(id);
+
+  if (fields.length > 1) {
+    await db.runAsync(
+      `UPDATE shelves SET ${fields.join(", ")} WHERE id = ?`,
+      values,
+    );
+  }
+};
+
+export const deleteShelf = async (
+  db: SQLiteDatabase,
+  id: string,
+): Promise<void> => {
+  await db.runAsync("DELETE FROM shelves WHERE id = ?", [id]);
+};
+
+export const getShelfBooks = async (
+  db: SQLiteDatabase,
+  shelfId: string,
+): Promise<Book[]> => {
+  const rows = await db.getAllAsync<BookRow>(
+    `SELECT b.* FROM books b
+     INNER JOIN book_shelves bs ON b.id = bs.book_id
+     WHERE bs.shelf_id = ?
+     ORDER BY bs.added_at DESC`,
+    [shelfId],
+  );
+  return rows.map(rowToBook);
+};
+
+export const addBookToShelf = async (
+  db: SQLiteDatabase,
+  bookId: string,
+  shelfId: string,
+): Promise<void> => {
+  await db.runAsync(
+    `INSERT OR IGNORE INTO book_shelves (book_id, shelf_id, added_at)
+     VALUES (?, ?, ?)`,
+    [bookId, shelfId, Date.now()],
+  );
+};
+
+export const removeBookFromShelf = async (
+  db: SQLiteDatabase,
+  bookId: string,
+  shelfId: string,
+): Promise<void> => {
+  await db.runAsync(
+    "DELETE FROM book_shelves WHERE book_id = ? AND shelf_id = ?",
+    [bookId, shelfId],
+  );
+};
+
+export const getBookShelfIds = async (
+  db: SQLiteDatabase,
+  bookId: string,
+): Promise<string[]> => {
+  const rows = await db.getAllAsync<{ shelf_id: string }>(
+    "SELECT shelf_id FROM book_shelves WHERE book_id = ?",
+    [bookId],
+  );
+  return rows.map((r) => r.shelf_id);
+};
+
+export const getShelfBookCount = async (
+  db: SQLiteDatabase,
+  shelfId: string,
+): Promise<number> => {
+  const result = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM book_shelves WHERE shelf_id = ?",
+    [shelfId],
+  );
+  return result?.count ?? 0;
 };

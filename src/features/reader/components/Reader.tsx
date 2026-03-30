@@ -3,15 +3,15 @@ import {
   useReader as useEpubReader,
 } from "@epubjs-react-native/core";
 import { useCallback, useMemo, useState } from "react";
-import { StyleSheet, View, useColorScheme } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useFileSystem } from "@/src/features/reader/hooks/useFileSystem";
 import {
   FONT_FAMILY_MAP,
-  THEME_COLORS,
+  getThemeColors,
   usePreferencesStore,
 } from "@/src/stores/preferencesStore";
-import type { Theme } from "@/src/types";
+import type { AccentColorName } from "@/src/theme";
 import { readerLog } from "@/src/utils/logger";
 
 interface ReaderProps {
@@ -37,23 +37,19 @@ export function Reader({
   onReady,
   onError,
 }: ReaderProps) {
-  const colorScheme = useColorScheme();
   const [, setIsReady] = useState(false);
 
   // Get user preferences
   const theme = usePreferencesStore((state) => state.theme);
+  const accentColor = usePreferencesStore(
+    (state) => state.accentColor,
+  ) as AccentColorName;
   const fontSize = usePreferencesStore((state) => state.fontSize);
   const fontFamily = usePreferencesStore((state) => state.fontFamily);
   const lineSpacing = usePreferencesStore((state) => state.lineSpacing);
 
   // Get theme colors
-  const effectiveTheme: Theme =
-    theme === "light" || theme === "dark" || theme === "sepia"
-      ? theme
-      : colorScheme === "dark"
-        ? "dark"
-        : "light";
-  const themeColors = THEME_COLORS[effectiveTheme];
+  const themeColors = getThemeColors(theme, accentColor);
 
   // Memoize theme object to prevent unnecessary re-renders
   const defaultTheme = useMemo(

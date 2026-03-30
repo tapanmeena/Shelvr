@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const CREATE_BOOKS_TABLE = `
   CREATE TABLE IF NOT EXISTS books (
