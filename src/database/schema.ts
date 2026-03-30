@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CREATE_BOOKS_TABLE = `
   CREATE TABLE IF NOT EXISTS books (
@@ -15,8 +15,6 @@ export const CREATE_BOOKS_TABLE = `
     page_count INTEGER,
     published_date TEXT,
     language TEXT,
-    series TEXT,
-    series_index REAL,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
