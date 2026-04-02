@@ -42,6 +42,9 @@ const ReaderScreen = () => {
   const [readerError, setReaderError] = useState<string | null>(null);
   const [readerInstanceKey, setReaderInstanceKey] = useState(0);
 
+  // true = initial open (should auto-hide), false = user toggled (stay until dismissed)
+  const autoHideRef = useRef(true);
+
   const {
     book,
     isLoading,
@@ -82,6 +85,7 @@ const ReaderScreen = () => {
   );
 
   const handleReaderTap = useCallback(() => {
+    autoHideRef.current = false;
     setShowHeader((prev) => !prev);
   }, []);
 
@@ -118,12 +122,19 @@ const ReaderScreen = () => {
   }, [flushProgress]);
 
   useEffect(() => {
-    if (!showHeader || showToc || showSettings || readerError) {
+    if (
+      !showHeader ||
+      !autoHideRef.current ||
+      showToc ||
+      showSettings ||
+      readerError
+    ) {
       return;
     }
 
     const timeout = setTimeout(() => {
       setShowHeader(false);
+      autoHideRef.current = false;
     }, CHROME_AUTO_HIDE_DELAY_MS);
 
     return () => {
