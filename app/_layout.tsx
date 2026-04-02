@@ -21,6 +21,10 @@ function useOnboardingRedirect() {
   const hasCompletedOnboarding = usePreferencesStore(
     (s) => s.hasCompletedOnboarding,
   );
+  const reopenLastBookOnLaunch = usePreferencesStore(
+    (s) => s.reopenLastBookOnLaunch,
+  );
+  const lastOpenedBookId = usePreferencesStore((s) => s.lastOpenedBookId);
   const hasNavigated = useRef(false);
 
   useEffect(() => {
@@ -38,6 +42,14 @@ function useOnboardingRedirect() {
     ) {
       hasNavigated.current = true;
       router.replace("/(tabs)" as any);
+    } else if (
+      hasCompletedOnboarding &&
+      reopenLastBookOnLaunch &&
+      lastOpenedBookId &&
+      !hasNavigated.current
+    ) {
+      hasNavigated.current = true;
+      router.push(`/reader/${lastOpenedBookId}` as any);
     }
   }, [isHydrated, hasCompletedOnboarding]);
 }
