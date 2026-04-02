@@ -1,10 +1,12 @@
 import Slider from "@react-native-community/slider";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import {
   usePreferencesStore,
   useThemeColors,
 } from "@/src/stores/preferencesStore";
+import { DEFAULT_PREFERENCES } from "@/src/types";
 
 interface LineSpacingSliderProps {
   value?: number;
@@ -38,9 +40,23 @@ export function LineSpacingSlider({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: colors.text }]}>Line Spacing</Text>
-        <Text style={[styles.value, { color: colors.primary }]}>
-          {selectedSpacing.toFixed(1)}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text style={[styles.value, { color: colors.primary }]}>
+            {selectedSpacing.toFixed(1)}
+          </Text>
+          {selectedSpacing !== DEFAULT_PREFERENCES.lineSpacing && (
+            <Pressable
+              onPress={() => handleChange(DEFAULT_PREFERENCES.lineSpacing)}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="refresh-outline"
+                size={16}
+                color={colors.subtext}
+              />
+            </Pressable>
+          )}
+        </View>
       </View>
       <View style={styles.sliderContainer}>
         <View style={styles.previewCompact}>
@@ -90,6 +106,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   label: {
     fontSize: 14,

@@ -376,45 +376,30 @@ function ReaderContent({
 
   // Page flip animation
   const pageSlideValue = useRef(new Animated.Value(0)).current;
-  const pageOpacityValue = useRef(new Animated.Value(1)).current;
 
   const playPageFlip = useCallback(
     (direction: "left" | "right") => {
-      if (pageAnimation === "none") return;
+      if (pageAnimation !== "slide") return;
 
-      if (pageAnimation === "slide") {
-        const from =
-          direction === "left" ? screenWidth * 0.3 : -screenWidth * 0.3;
-        pageSlideValue.setValue(from);
-        Animated.timing(pageSlideValue, {
-          toValue: 0,
-          duration: 280,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }).start();
-      } else {
-        // Fade
-        pageOpacityValue.setValue(0.15);
-        Animated.timing(pageOpacityValue, {
-          toValue: 1,
-          duration: 350,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: false,
-        }).start();
-      }
+      const from =
+        direction === "left" ? screenWidth * 0.3 : -screenWidth * 0.3;
+      pageSlideValue.setValue(from);
+      Animated.timing(pageSlideValue, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
     },
-    [pageAnimation, pageSlideValue, pageOpacityValue, screenWidth],
+    [pageAnimation, pageSlideValue, screenWidth],
   );
 
   const pageFlipStyle = useMemo(() => {
     if (pageAnimation === "slide") {
       return { transform: [{ translateX: pageSlideValue }] };
     }
-    if (pageAnimation === "fade") {
-      return { opacity: pageOpacityValue };
-    }
     return {};
-  }, [pageAnimation, pageSlideValue, pageOpacityValue]);
+  }, [pageAnimation, pageSlideValue]);
 
   const [showTapZoneHint, setShowTapZoneHint] = useState(true);
 
