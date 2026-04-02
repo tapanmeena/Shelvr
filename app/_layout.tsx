@@ -62,14 +62,7 @@ function useReopenLastBook() {
   useEffect(() => {
     if (!isHydrated || !dbReady || !hasCompletedOnboarding) return;
 
-    console.log("[ReopenBook] ready:", {
-      reopenLastBookOnLaunch,
-      lastOpenedBookId,
-      hasNavigated: hasNavigated.current,
-    });
-
     if (reopenLastBookOnLaunch && lastOpenedBookId && !hasNavigated.current) {
-      console.log("[ReopenBook] navigating to reader:", lastOpenedBookId);
       hasNavigated.current = true;
       router.push(`/reader/${lastOpenedBookId}` as any);
     }
