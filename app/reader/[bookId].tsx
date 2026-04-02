@@ -64,7 +64,7 @@ const ReaderScreen = () => {
     text: themeColors.text,
     subtext: themeColors.textSecondary,
     primary: themeColors.accent,
-    headerBg: themeColors.overlay,
+    headerBg: themeColors.background,
   };
 
   const handleClose = async () => {
@@ -323,6 +323,30 @@ function ReaderContent({
 }: ReaderContentProps) {
   useKeepAwake();
 
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const footerTranslateY = useRef(new Animated.Value(0)).current;
+  const chromeOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerTranslateY, {
+        toValue: showHeader ? 0 : -120,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(footerTranslateY, {
+        toValue: showHeader ? 0 : 100,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(chromeOpacity, {
+        toValue: showHeader ? 1 : 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [showHeader, headerTranslateY, footerTranslateY, chromeOpacity]);
+
   const { toc, goToLocation, goPrevious, goNext, section } = useEpubReader();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -437,9 +461,18 @@ function ReaderContent({
       )}
 
       {/* Header Overlay */}
-      {showHeader && (
+      <Animated.View
+        style={[
+          styles.headerOverlay,
+          {
+            opacity: chromeOpacity,
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+        pointerEvents={showHeader ? "auto" : "none"}
+      >
         <SafeAreaView
-          style={[styles.headerOverlay, { backgroundColor: colors.headerBg }]}
+          style={{ backgroundColor: colors.headerBg }}
           edges={["top"]}
         >
           <View style={styles.header}>
@@ -478,12 +511,21 @@ function ReaderContent({
             </View>
           </View>
         </SafeAreaView>
-      )}
+      </Animated.View>
 
       {/* Footer Overlay with Progress */}
-      {showHeader && (
+      <Animated.View
+        style={[
+          styles.footerOverlay,
+          {
+            opacity: chromeOpacity,
+            transform: [{ translateY: footerTranslateY }],
+          },
+        ]}
+        pointerEvents={showHeader ? "auto" : "none"}
+      >
         <SafeAreaView
-          style={[styles.footerOverlay, { backgroundColor: colors.headerBg }]}
+          style={{ backgroundColor: colors.headerBg }}
           edges={["bottom"]}
         >
           <View style={styles.footer}>
@@ -519,7 +561,7 @@ function ReaderContent({
             </Text>
           </View>
         </SafeAreaView>
-      )}
+      </Animated.View>
 
       {/* Tap Zone Hint */}
       <TapZoneHint visible={showTapZoneHint} colors={colors} />
