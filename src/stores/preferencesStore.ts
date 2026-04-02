@@ -32,6 +32,28 @@ interface PreferencesActions {
 
 type PreferncesStore = PreferencesState & PreferencesActions;
 
+const UNSUPPORTED_FONT_FALLBACKS: Partial<Record<FontFamily, FontFamily>> = {
+  bookerly: "georgia",
+  openDyslexic: "system",
+};
+
+export const AVAILABLE_READER_FONTS: FontFamily[] = [
+  "original",
+  "system",
+  "georgia",
+  "palatino",
+];
+
+export function normalizeReaderFontFamily(fontFamily: FontFamily): FontFamily {
+  return (
+    AVAILABLE_READER_FONTS.find(
+      (availableFont) => availableFont === fontFamily,
+    ) ??
+    UNSUPPORTED_FONT_FALLBACKS[fontFamily] ??
+    "original"
+  );
+}
+
 export const usePreferencesStore = create<PreferncesStore>()(
   persist(
     (set) => ({
@@ -47,7 +69,8 @@ export const usePreferencesStore = create<PreferncesStore>()(
         set({ fontSize: clamped });
       },
 
-      setFontFamily: (fontFamily) => set({ fontFamily }),
+      setFontFamily: (fontFamily) =>
+        set({ fontFamily: normalizeReaderFontFamily(fontFamily) }),
 
       setLineSpacing: (lineSpacing) => {
         // Clamp between 1.0 and 2.5
@@ -83,6 +106,9 @@ export const usePreferencesStore = create<PreferncesStore>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
       }),
       onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setFontFamily(state.fontFamily);
+        }
         state?.setHydrated(true);
       },
     },

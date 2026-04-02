@@ -9,6 +9,7 @@ import { useFileSystem } from "@/src/features/reader/hooks/useFileSystem";
 import {
   FONT_FAMILY_MAP,
   getThemeColors,
+  normalizeReaderFontFamily,
   usePreferencesStore,
 } from "@/src/stores/preferencesStore";
 import type { AccentColorName } from "@/src/theme";
@@ -21,11 +22,13 @@ interface ReaderProps {
   onLocationChange?: (
     cfi: string,
     progress: number | null,
-    chapter?: string,
+    chapterHref?: string,
+    chapterTitle?: string,
   ) => void;
   onLocationsReady?: (epubKey: string, locations: string[]) => void;
   onReady?: () => void;
   onError?: (reason: string) => void;
+  onSingleTap?: () => void;
 }
 
 export function Reader({
@@ -36,6 +39,7 @@ export function Reader({
   onLocationsReady,
   onReady,
   onError,
+  onSingleTap,
 }: ReaderProps) {
   const [, setIsReady] = useState(false);
 
@@ -45,7 +49,9 @@ export function Reader({
     (state) => state.accentColor,
   ) as AccentColorName;
   const fontSize = usePreferencesStore((state) => state.fontSize);
-  const fontFamily = usePreferencesStore((state) => state.fontFamily);
+  const fontFamily = normalizeReaderFontFamily(
+    usePreferencesStore((state) => state.fontFamily),
+  );
   const lineSpacing = usePreferencesStore((state) => state.lineSpacing);
 
   // Get theme colors
@@ -92,6 +98,7 @@ export function Reader({
       onLocationChange(
         _currentLocation.start.cfi,
         percentage,
+        _currentSection?.href,
         _currentSection?.title,
       );
     },
@@ -125,6 +132,7 @@ export function Reader({
         onLocationsReady={onLocationsReady}
         onReady={handleReady}
         onDisplayError={handleError}
+        onSingleTap={onSingleTap}
         enableSelection={true}
         defaultTheme={defaultTheme}
       />

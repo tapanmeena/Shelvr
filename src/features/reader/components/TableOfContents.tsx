@@ -1,7 +1,7 @@
 import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   LayoutChangeEvent,
   Pressable,
@@ -22,7 +22,9 @@ interface TocItem {
 
 interface TableOfContentsProps {
   items: TocItem[];
-  currentChapter?: string;
+  visible: boolean;
+  currentChapterHref?: string;
+  currentChapterTitle?: string;
   onSelectChapter: (href: string) => void;
   onClose: () => void;
 }
@@ -57,7 +59,9 @@ function filterToc(items: TocItem[], query: string): TocItem[] {
 
 export const TableOfContents = ({
   items,
-  currentChapter,
+  visible,
+  currentChapterHref,
+  currentChapterTitle,
   onSelectChapter,
   onClose,
 }: TableOfContentsProps) => {
@@ -80,19 +84,48 @@ export const TableOfContents = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const hasScrolled = useRef(false);
 
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    setSearchQuery("");
+    hasScrolled.current = false;
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+  }, [visible]);
+
   // Determine which chapters are "past" (before the current one)
   // and which parent items contain the active subitem
-  const { pastChapters, activeParents } = useMemo(() => {
+  const { pastChapters, activeParents, matchByHref } = useMemo(() => {
     const past = new Set<string>();
     const parents = new Set<string>();
-    if (!currentChapter) return { pastChapters: past, activeParents: parents };
-
+    const normalizedChapterTitle = currentChapterTitle?.trim();
     const flat = flattenToc(items);
-    // Only build "past" set if currentChapter actually exists in the TOC
-    const currentExists = flat.some((e) => e.label === currentChapter);
-    if (currentExists) {
+
+    const hasHrefMatch = currentChapterHref
+      ? flat.some((entry) => entry.href === currentChapterHref)
+      : false;
+    const hasTitleMatch = normalizedChapterTitle
+      ? flat.some((entry) => entry.label === normalizedChapterTitle)
+      : false;
+    const shouldMatchByHref = !!currentChapterHref && hasHrefMatch;
+
+    if (!shouldMatchByHref && !hasTitleMatch) {
+      return {
+        pastChapters: past,
+        activeParents: parents,
+        matchByHref: shouldMatchByHref,
+      };
+    }
+
+    if (shouldMatchByHref) {
       for (const entry of flat) {
-        if (entry.label === currentChapter) break;
+        if (entry.href === currentChapterHref) break;
+        past.add(entry.href);
+      }
+    } else {
+      for (const entry of flat) {
+        if (entry.label === normalizedChapterTitle) break;
         past.add(entry.label);
       }
     }
@@ -101,7 +134,12 @@ export const TableOfContents = ({
     const findActiveParent = (tocItems: TocItem[]): boolean => {
       for (const item of tocItems) {
         const trimmed = item.label.trim();
-        if (trimmed === currentChapter) return true;
+        const isCurrent = shouldMatchByHref
+          ? item.href === currentChapterHref
+          : trimmed === normalizedChapterTitle;
+
+        if (isCurrent) return true;
+
         if (item.subitems?.length) {
           const childIsActive = findActiveParent(item.subitems);
           if (childIsActive) {
@@ -114,8 +152,12 @@ export const TableOfContents = ({
     };
     findActiveParent(items);
 
-    return { pastChapters: past, activeParents: parents };
-  }, [items, currentChapter]);
+    return {
+      pastChapters: past,
+      activeParents: parents,
+      matchByHref: shouldMatchByHref,
+    };
+  }, [items, currentChapterHref, currentChapterTitle]);
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items;
@@ -142,9 +184,11 @@ export const TableOfContents = ({
 
   const renderItem = (item: TocItem, depth: number = 0) => {
     const trimmedLabel = item.label.trim();
-    const isActive = currentChapter === trimmedLabel;
+    const isActive = matchByHref
+      ? item.href === currentChapterHref
+      : currentChapterTitle?.trim() === trimmedLabel;
     const isActiveParent = activeParents.has(trimmedLabel);
-    const isPast = pastChapters.has(trimmedLabel);
+    const isPast = pastChapters.has(matchByHref ? item.href : trimmedLabel);
     const isTopLevel = depth === 0;
     const shouldHighlight = isActive || isActiveParent;
 

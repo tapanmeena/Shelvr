@@ -11,12 +11,26 @@ import {
   ReaderProvider,
   useReader as useEpubReader,
 } from "@epubjs-react-native/core";
+import { useKeepAwake } from "expo-keep-awake";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useRef, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  AppState,
+  type GestureResponderEvent,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const CHROME_AUTO_HIDE_DELAY_MS = 1500;
+const TAP_ZONE_HINT_DURATION_MS = 1500;
 
 const ReaderScreen = () => {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
@@ -25,6 +39,8 @@ const ReaderScreen = () => {
   const [showHeader, setShowHeader] = useState(true);
   const [showToc, setShowToc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [readerError, setReaderError] = useState<string | null>(null);
+  const [readerInstanceKey, setReaderInstanceKey] = useState(0);
 
   const {
     book,
@@ -34,11 +50,11 @@ const ReaderScreen = () => {
     initialLocations,
     currentProgress,
     currentChapter,
+    currentChapterHref,
     saveProgress,
+    flushProgress,
     handleLocationsReady,
   } = useReader(bookId || "");
-
-  const lastCfiRef = useRef("");
 
   const colors = {
     background: themeColors.background,
@@ -48,14 +64,19 @@ const ReaderScreen = () => {
     headerBg: themeColors.overlay,
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    await flushProgress();
     router.back();
   };
 
   const handleLocationChange = useCallback(
-    (cfi: string, progress: number | null, chapter?: string) => {
-      saveProgress(cfi, progress, undefined, chapter);
-      lastCfiRef.current = cfi;
+    (
+      cfi: string,
+      progress: number | null,
+      chapterHref?: string,
+      chapterTitle?: string,
+    ) => {
+      saveProgress(cfi, progress, chapterHref, chapterTitle);
     },
     [saveProgress],
   );
@@ -65,16 +86,50 @@ const ReaderScreen = () => {
   }, []);
 
   const handleReady = useCallback(() => {
+    setReaderError(null);
     readerLog.info("Reader ready");
   }, []);
 
   const handleError = useCallback((reason: string) => {
     readerLog.error("Reader error:", reason);
+    setReaderError(reason || "This section could not be rendered.");
+    setShowHeader(true);
+  }, []);
+
+  const handleRetryReader = useCallback(() => {
+    setReaderError(null);
+    setReaderInstanceKey((currentKey) => currentKey + 1);
   }, []);
 
   const handleOpenToc = () => {
     setShowToc(true);
   };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") {
+        void flushProgress();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [flushProgress]);
+
+  useEffect(() => {
+    if (!showHeader || showToc || showSettings || readerError) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setShowHeader(false);
+    }, CHROME_AUTO_HIDE_DELAY_MS);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [showHeader, showToc, showSettings, readerError]);
 
   if (isLoading) {
     return (
@@ -127,6 +182,9 @@ const ReaderScreen = () => {
         showSettings={showSettings}
         currentProgress={currentProgress}
         currentChapter={currentChapter}
+        currentChapterHref={currentChapterHref}
+        readerError={readerError}
+        readerInstanceKey={readerInstanceKey}
         colors={colors}
         onReaderTap={handleReaderTap}
         onClose={handleClose}
@@ -136,6 +194,7 @@ const ReaderScreen = () => {
         onLocationsReady={handleLocationsReady}
         onReady={handleReady}
         onError={handleError}
+        onRetryReader={handleRetryReader}
         onShowSettings={() => setShowSettings(true)}
         onCloseSettings={() => setShowSettings(false)}
       />
@@ -152,21 +211,77 @@ interface ReaderContentProps {
   showSettings: boolean;
   currentProgress: number;
   currentChapter?: string;
+  currentChapterHref?: string;
+  readerError: string | null;
+  readerInstanceKey: number;
   colors: Record<string, string>;
   onReaderTap: () => void;
-  onClose: () => void;
+  onClose: () => void | Promise<void>;
   onOpenToc: () => void;
   onCloseToc: () => void;
   onLocationChange: (
     cfi: string,
     progress: number | null,
-    chapter?: string,
+    chapterHref?: string,
+    chapterTitle?: string,
   ) => void;
   onLocationsReady: (epubKey: string, locations: string[]) => void;
   onReady: () => void;
   onError: (reason: string) => void;
+  onRetryReader: () => void;
   onShowSettings: () => void;
   onCloseSettings: () => void;
+}
+
+/** Tap zone hint overlay — shows left/center/right regions briefly */
+function TapZoneHint({
+  visible,
+  colors,
+}: {
+  visible: boolean;
+  colors: Record<string, string>;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(TAP_ZONE_HINT_DURATION_MS - 600),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, opacity]);
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View
+      style={[styles.tapZoneOverlay, { opacity }]}
+      pointerEvents="none"
+    >
+      <View style={[styles.tapZone, styles.tapZoneLeft]}>
+        <Ionicons name="chevron-back" size={32} color="#fff" />
+        <Text style={styles.tapZoneText}>Previous</Text>
+      </View>
+      <View style={[styles.tapZone, styles.tapZoneCenter]}>
+        <Ionicons name="menu-outline" size={32} color="#fff" />
+        <Text style={styles.tapZoneText}>Controls</Text>
+      </View>
+      <View style={[styles.tapZone, styles.tapZoneRight]}>
+        <Ionicons name="chevron-forward" size={32} color="#fff" />
+        <Text style={styles.tapZoneText}>Next</Text>
+      </View>
+    </Animated.View>
+  );
 }
 
 /** Inner component that can access ReaderProvider context */
@@ -179,6 +294,9 @@ function ReaderContent({
   showSettings,
   currentProgress,
   currentChapter,
+  currentChapterHref,
+  readerError,
+  readerInstanceKey,
   colors,
   onReaderTap,
   onClose,
@@ -188,14 +306,47 @@ function ReaderContent({
   onLocationsReady,
   onReady,
   onError,
+  onRetryReader,
   onShowSettings,
   onCloseSettings,
 }: ReaderContentProps) {
-  const { toc, goToLocation, section } = useEpubReader();
+  useKeepAwake();
+
+  const { toc, goToLocation, goPrevious, goNext, section } = useEpubReader();
+  const { width: screenWidth } = useWindowDimensions();
+
+  const [showTapZoneHint, setShowTapZoneHint] = useState(true);
+
+  const handleReaderPress = useCallback(
+    (event: GestureResponderEvent) => {
+      const tapX = event.nativeEvent.locationX;
+      const leftBound = screenWidth * 0.25;
+      const rightBound = screenWidth * 0.75;
+
+      if (tapX < leftBound) {
+        goPrevious();
+      } else if (tapX > rightBound) {
+        goNext();
+      } else {
+        onReaderTap();
+      }
+    },
+    [screenWidth, goPrevious, goNext, onReaderTap],
+  );
+
+  // Dismiss the tap zone hint after the animation finishes
+  useEffect(() => {
+    if (!showTapZoneHint) return;
+    const timer = setTimeout(() => {
+      setShowTapZoneHint(false);
+    }, TAP_ZONE_HINT_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [showTapZoneHint]);
 
   // Use the epub reader's current section for TOC highlighting,
   // fall back to the persisted currentChapter from useReader
   const activeChapter = section?.label?.trim() || currentChapter;
+  const activeChapterHref = section?.href || currentChapterHref;
 
   const handleSelectChapter = useCallback(
     (href: string) => {
@@ -210,8 +361,9 @@ function ReaderContent({
       <StatusBar hidden={!showHeader} />
 
       {/* Reader Content */}
-      <Pressable style={styles.readerContainer} onPress={onReaderTap}>
+      <Pressable style={styles.readerContainer} onPress={handleReaderPress}>
         <Reader
+          key={`${book.id}-${readerInstanceKey}`}
           bookPath={book.filePath}
           initialLocation={initialLocation}
           initialLocations={initialLocations}
@@ -221,6 +373,55 @@ function ReaderContent({
           onError={onError}
         />
       </Pressable>
+
+      {readerError && (
+        <View
+          style={[
+            styles.errorOverlay,
+            { backgroundColor: `${colors.background}F2` },
+          ]}
+        >
+          <EmptyState
+            icon="warning-outline"
+            title="Reader Problem"
+            message={readerError}
+            action={
+              <View style={styles.errorActions}>
+                <Pressable
+                  style={[
+                    styles.errorActionButton,
+                    { backgroundColor: colors.primary },
+                  ]}
+                  onPress={onRetryReader}
+                >
+                  <Text style={styles.errorActionPrimaryText}>
+                    Reload Reader
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.errorActionButton,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                  onPress={onClose}
+                >
+                  <Text
+                    style={[
+                      styles.errorActionSecondaryText,
+                      { color: colors.primary },
+                    ]}
+                  >
+                    Close Book
+                  </Text>
+                </Pressable>
+              </View>
+            }
+          />
+        </View>
+      )}
 
       {/* Header Overlay */}
       {showHeader && (
@@ -273,13 +474,42 @@ function ReaderContent({
           edges={["bottom"]}
         >
           <View style={styles.footer}>
-            <ProgressBar progress={currentProgress * 100} />
+            <View style={styles.progressRow}>
+              <Pressable
+                onPress={() => goPrevious()}
+                style={styles.navArrow}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={22}
+                  color={colors.primary}
+                />
+              </Pressable>
+              <View style={styles.progressBarWrap}>
+                <ProgressBar progress={currentProgress * 100} />
+              </View>
+              <Pressable
+                onPress={() => goNext()}
+                style={styles.navArrow}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={22}
+                  color={colors.primary}
+                />
+              </Pressable>
+            </View>
             <Text style={[styles.progressText, { color: colors.subtext }]}>
               {(currentProgress * 100).toFixed(2)}% complete
             </Text>
           </View>
         </SafeAreaView>
       )}
+
+      {/* Tap Zone Hint */}
+      <TapZoneHint visible={showTapZoneHint} colors={colors} />
 
       {/* Table of Contents Modal */}
       <Modal
@@ -290,7 +520,9 @@ function ReaderContent({
       >
         <TableOfContents
           items={toc}
-          currentChapter={activeChapter}
+          visible={showToc}
+          currentChapterHref={activeChapterHref}
+          currentChapterTitle={activeChapter}
           onSelectChapter={handleSelectChapter}
           onClose={onCloseToc}
         />
@@ -315,6 +547,32 @@ const styles = StyleSheet.create({
   },
   readerContainer: {
     flex: 1,
+  },
+  errorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 120,
+  },
+  errorActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  errorActionButton: {
+    minWidth: 132,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  errorActionPrimaryText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  errorActionSecondaryText: {
+    fontSize: 15,
+    fontWeight: "600",
   },
   headerOverlay: {
     position: "absolute",
@@ -362,10 +620,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  progressBarWrap: {
+    flex: 1,
+  },
+  navArrow: {
+    padding: 4,
+  },
   progressText: {
     fontSize: 12,
     textAlign: "center",
     marginTop: 4,
+  },
+  // Tap zone hint
+  tapZoneOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 200,
+    flexDirection: "row",
+  },
+  tapZone: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
+  tapZoneLeft: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: "rgba(255,255,255,0.2)",
+  },
+  tapZoneCenter: {
+    flex: 1.5,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  tapZoneRight: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: "rgba(255,255,255,0.2)",
+  },
+  tapZoneText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 });
 

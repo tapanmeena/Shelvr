@@ -1,4 +1,4 @@
-// import Slider from "@react-native-community/slider";
+import Slider from "@react-native-community/slider";
 import { StyleSheet, Text, View } from "react-native";
 
 import {
@@ -22,10 +22,10 @@ export function FontSizeSlider({
   const themeColors = useThemeColors();
 
   const currentSize = usePreferencesStore((state) => state.fontSize);
-  // const setFontSize = usePreferencesStore((state) => state.setFontSize);
+  const setFontSize = usePreferencesStore((state) => state.setFontSize);
 
   const selectedSize = value ?? currentSize;
-  // const handleChange = onChange ?? setFontSize;
+  const handleChange = onChange ?? setFontSize;
 
   const colors = {
     text: themeColors.text,
@@ -44,7 +44,7 @@ export function FontSizeSlider({
       </View>
       <View style={styles.sliderContainer}>
         <Text style={[styles.previewSmall, { color: colors.subtext }]}>A</Text>
-        {/* <Slider
+        <Slider
           style={styles.slider}
           minimumValue={min}
           maximumValue={max}
@@ -54,7 +54,7 @@ export function FontSizeSlider({
           minimumTrackTintColor={colors.primary}
           maximumTrackTintColor={colors.track}
           thumbTintColor={colors.primary}
-        /> */}
+        />
         <Text style={[styles.previewLarge, { color: colors.subtext }]}>A</Text>
       </View>
     </View>

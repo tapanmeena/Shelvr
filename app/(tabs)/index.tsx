@@ -45,7 +45,10 @@ export default function HomeScreen() {
 
   const continueBook = useMemo(() => {
     if (!lastOpenedBookId) return null;
-    return booksWithProgress.find((b) => b.id === lastOpenedBookId) ?? null;
+    const book =
+      booksWithProgress.find((b) => b.id === lastOpenedBookId) ?? null;
+    if (book?.progress && book.progress.percentage >= 1.0) return null;
+    return book;
   }, [lastOpenedBookId, booksWithProgress]);
 
   const recentlyRead = useMemo(() => {

@@ -1,4 +1,4 @@
-// import Slider from "@react-native-community/slider";
+import Slider from "@react-native-community/slider";
 import { StyleSheet, Text, View } from "react-native";
 
 import {
@@ -22,10 +22,10 @@ export function LineSpacingSlider({
   const themeColors = useThemeColors();
 
   const currentSpacing = usePreferencesStore((state) => state.lineSpacing);
-  // const setLineSpacing = usePreferencesStore((state) => state.setLineSpacing);
+  const setLineSpacing = usePreferencesStore((state) => state.setLineSpacing);
 
   const selectedSpacing = value ?? currentSpacing;
-  // const handleChange = onChange ?? setLineSpacing;
+  const handleChange = onChange ?? setLineSpacing;
 
   const colors = {
     text: themeColors.text,
@@ -54,7 +54,7 @@ export function LineSpacingSlider({
           />
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
         </View>
-        {/* <Slider
+        <Slider
           style={styles.slider}
           minimumValue={min}
           maximumValue={max}
@@ -64,7 +64,7 @@ export function LineSpacingSlider({
           minimumTrackTintColor={colors.primary}
           maximumTrackTintColor={colors.track}
           thumbTintColor={colors.primary}
-        /> */}
+        />
         <View style={styles.previewWide}>
           <View style={[styles.line, { backgroundColor: colors.subtext }]} />
           <View

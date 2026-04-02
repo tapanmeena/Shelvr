@@ -1,6 +1,8 @@
 import {
+  AVAILABLE_READER_FONTS,
   useThemeColors,
   FONT_FAMILY_MAP,
+  normalizeReaderFontFamily,
   usePreferencesStore,
 } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,13 +10,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import type { FontFamily } from "@/src/types";
 
-const FONTS: { id: FontFamily; label: string; preview: string }[] = [
+const ALL_FONTS: { id: FontFamily; label: string; preview: string }[] = [
   { id: "system", label: "System", preview: "Aa" },
+  { id: "original", label: "Original", preview: "Aa" },
   { id: "georgia", label: "Georgia", preview: "Aa" },
   { id: "palatino", label: "Palatino", preview: "Aa" },
   { id: "bookerly", label: "Bookerly", preview: "Aa" },
   { id: "openDyslexic", label: "OpenDyslexic", preview: "Aa" },
 ];
+
+const FONTS = ALL_FONTS.filter((font) =>
+  AVAILABLE_READER_FONTS.includes(font.id),
+);
 
 interface FontPickerProps {
   value?: FontFamily;
@@ -27,7 +34,7 @@ export function FontPicker({ value, onChange }: FontPickerProps) {
   const currentFont = usePreferencesStore((state) => state.fontFamily);
   const setFontFamily = usePreferencesStore((state) => state.setFontFamily);
 
-  const selectedFont = value ?? currentFont;
+  const selectedFont = normalizeReaderFontFamily(value ?? currentFont);
   const handleChange = onChange ?? setFontFamily;
 
   const colors = {
