@@ -24,6 +24,8 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
   const [matchedIds, setMatchedIds] = useState<Set<string> | null>(null);
   const db = useDatabase();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const booksRef = useRef(books);
+  booksRef.current = books;
 
   useEffect(() => {
     if (debounceRef.current) {
@@ -45,10 +47,9 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
         setMatchedIds(new Set(results.map((b) => b.id)));
       } catch (err) {
         libraryLog.error("DB search failed, falling back to in-memory:", err);
-        // Fallback: in-memory filter
         const query = trimmed.toLowerCase();
         const ids = new Set(
-          books
+          booksRef.current
             .filter(
               (book) =>
                 book.title.toLowerCase().includes(query) ||
@@ -65,7 +66,7 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [searchQuery, db, books]);
+  }, [searchQuery, db]);
 
   const filteredBooks =
     matchedIds === null
