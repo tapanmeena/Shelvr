@@ -6,6 +6,7 @@ import { ThemePicker } from "@/src/components/ThemePicker";
 import { FontPicker } from "./FontPicker";
 import { FontSizeSlider } from "./FontSizeSlider";
 import { LineSpacingSlider } from "./LineSpacingSlider";
+import { PageAnimationPicker } from "./PageAnimationPicker";
 
 interface ReaderSettingsProps {
   onClose: () => void;
@@ -34,6 +35,7 @@ export function ReaderSettings({ onClose }: ReaderSettingsProps) {
         <FontPicker />
         <FontSizeSlider />
         <LineSpacingSlider />
+        <PageAnimationPicker />
 
         <View style={styles.tip}>
           <Ionicons

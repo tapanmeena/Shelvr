@@ -29,6 +29,8 @@ interface ReaderProps {
   onReady?: () => void;
   onError?: (reason: string) => void;
   onSingleTap?: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
 export function Reader({
@@ -40,6 +42,8 @@ export function Reader({
   onReady,
   onError,
   onSingleTap,
+  onSwipeLeft,
+  onSwipeRight,
 }: ReaderProps) {
   const [, setIsReady] = useState(false);
 
@@ -133,6 +137,8 @@ export function Reader({
         onReady={handleReady}
         onDisplayError={handleError}
         onSingleTap={onSingleTap}
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
         enableSelection={true}
         defaultTheme={defaultTheme}
       />

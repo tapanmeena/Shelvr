@@ -18,10 +18,11 @@ import { useKeepAwake } from "expo-keep-awake";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   AppState,
+  Easing,
   type GestureResponderEvent,
   Modal,
   Pressable,
@@ -371,24 +372,76 @@ function ReaderContent({
 
   const { toc, goToLocation, goPrevious, goNext, section } = useEpubReader();
   const { width: screenWidth } = useWindowDimensions();
+  const pageAnimation = usePreferencesStore((s) => s.pageAnimation);
+
+  // Page flip animation
+  const pageSlideValue = useRef(new Animated.Value(0)).current;
+  const pageOpacityValue = useRef(new Animated.Value(1)).current;
+
+  const playPageFlip = useCallback(
+    (direction: "left" | "right") => {
+      if (pageAnimation === "none") return;
+
+      if (pageAnimation === "slide") {
+        const from =
+          direction === "left" ? screenWidth * 0.3 : -screenWidth * 0.3;
+        pageSlideValue.setValue(from);
+        Animated.timing(pageSlideValue, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      } else {
+        // Fade
+        pageOpacityValue.setValue(0.15);
+        Animated.timing(pageOpacityValue, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: false,
+        }).start();
+      }
+    },
+    [pageAnimation, pageSlideValue, pageOpacityValue, screenWidth],
+  );
+
+  const pageFlipStyle = useMemo(() => {
+    if (pageAnimation === "slide") {
+      return { transform: [{ translateX: pageSlideValue }] };
+    }
+    if (pageAnimation === "fade") {
+      return { opacity: pageOpacityValue };
+    }
+    return {};
+  }, [pageAnimation, pageSlideValue, pageOpacityValue]);
 
   const [showTapZoneHint, setShowTapZoneHint] = useState(true);
 
+  const swipeActiveRef = useRef(false);
+
   const handleReaderPress = useCallback(
     (event: GestureResponderEvent) => {
+      if (swipeActiveRef.current) {
+        swipeActiveRef.current = false;
+        return;
+      }
+
       const tapX = event.nativeEvent.locationX;
       const leftBound = screenWidth * 0.25;
       const rightBound = screenWidth * 0.75;
 
       if (tapX < leftBound) {
+        playPageFlip("right");
         goPrevious();
       } else if (tapX > rightBound) {
+        playPageFlip("left");
         goNext();
       } else {
         onReaderTap();
       }
     },
-    [screenWidth, goPrevious, goNext, onReaderTap],
+    [screenWidth, goPrevious, goNext, onReaderTap, playPageFlip],
   );
 
   // Dismiss the tap zone hint after the animation finishes
@@ -421,16 +474,26 @@ function ReaderContent({
 
       {/* Reader Content */}
       <Pressable style={styles.readerContainer} onPress={handleReaderPress}>
-        <Reader
-          key={`${book.id}-${readerInstanceKey}`}
-          bookPath={book.filePath}
-          initialLocation={initialLocation}
-          initialLocations={initialLocations}
-          onLocationChange={onLocationChange}
-          onLocationsReady={onLocationsReady}
-          onReady={onReady}
-          onError={onError}
-        />
+        <Animated.View style={[styles.readerContainer, pageFlipStyle]}>
+          <Reader
+            key={`${book.id}-${readerInstanceKey}`}
+            bookPath={book.filePath}
+            initialLocation={initialLocation}
+            initialLocations={initialLocations}
+            onLocationChange={onLocationChange}
+            onLocationsReady={onLocationsReady}
+            onReady={onReady}
+            onError={onError}
+            onSwipeLeft={() => {
+              swipeActiveRef.current = true;
+              playPageFlip("left");
+            }}
+            onSwipeRight={() => {
+              swipeActiveRef.current = true;
+              playPageFlip("right");
+            }}
+          />
+        </Animated.View>
       </Pressable>
 
       {/* Loading overlay — blocks touches until epub is ready */}
@@ -556,7 +619,10 @@ function ReaderContent({
           <View style={styles.footer}>
             <View style={styles.progressRow}>
               <Pressable
-                onPress={() => goPrevious()}
+                onPress={() => {
+                  playPageFlip("right");
+                  goPrevious();
+                }}
                 style={styles.navArrow}
                 hitSlop={8}
               >
@@ -570,7 +636,10 @@ function ReaderContent({
                 <ProgressBar progress={currentProgress * 100} />
               </View>
               <Pressable
-                onPress={() => goNext()}
+                onPress={() => {
+                  playPageFlip("left");
+                  goNext();
+                }}
                 style={styles.navArrow}
                 hitSlop={8}
               >
@@ -627,6 +696,7 @@ const styles = StyleSheet.create({
   },
   readerContainer: {
     flex: 1,
+    overflow: "hidden",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
