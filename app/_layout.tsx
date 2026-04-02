@@ -44,12 +44,15 @@ function useOnboardingRedirect() {
 function AppContent() {
   const themeName = useTamaguiThemeName();
   const colors = useThemeColors();
+  const currentTheme = usePreferencesStore((s) => s.theme);
+  const statusBarStyle =
+    currentTheme === "dark" || currentTheme === "midnight" ? "light" : "dark";
   useOnboardingRedirect();
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={themeName}>
       <DatabaseProvider>
-        <StatusBar style="auto" />
+        <StatusBar style={statusBarStyle} />
         <Stack
           screenOptions={{
             headerShown: false,

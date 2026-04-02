@@ -5,7 +5,10 @@ import type { BookWithProgress, ImportingBook } from "@/src/types";
 
 import { BookCard } from "./BookCard";
 
-type GridItem = BookWithProgress | ImportingBook | { id: string; _spacer: true };
+type GridItem =
+  | BookWithProgress
+  | ImportingBook
+  | { id: string; _spacer: true };
 
 const isImportingGridBook = (
   item: BookWithProgress | ImportingBook,

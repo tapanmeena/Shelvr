@@ -5,7 +5,10 @@ import {
   TableOfContents,
 } from "@/src/features/reader/components";
 import { useReader } from "@/src/features/reader/hooks/useReader";
-import { useThemeColors } from "@/src/stores/preferencesStore";
+import {
+  usePreferencesStore,
+  useThemeColors,
+} from "@/src/stores/preferencesStore";
 import { readerLog } from "@/src/utils/logger";
 import {
   ReaderProvider,
@@ -29,21 +32,26 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const CHROME_AUTO_HIDE_DELAY_MS = 1500;
-const TAP_ZONE_HINT_DURATION_MS = 1500;
+const CHROME_AUTO_HIDE_DELAY_MS = 10;
+const TAP_ZONE_HINT_DURATION_MS = 10;
 
 const ReaderScreen = () => {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
   const themeColors = useThemeColors();
+  const currentTheme = usePreferencesStore((s) => s.theme);
+  const statusBarStyle =
+    currentTheme === "dark" || currentTheme === "midnight" ? "light" : "dark";
 
   const [showHeader, setShowHeader] = useState(true);
   const [showToc, setShowToc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [readerError, setReaderError] = useState<string | null>(null);
   const [readerInstanceKey, setReaderInstanceKey] = useState(0);
+  const [readerReady, setReaderReady] = useState(false);
 
   // true = initial open (should auto-hide), false = user toggled (stay until dismissed)
   const autoHideRef = useRef(true);
+  const readerReadyRef = useRef(false);
 
   const {
     book,
@@ -90,17 +98,25 @@ const ReaderScreen = () => {
   }, []);
 
   const handleReady = useCallback(() => {
+    readerReadyRef.current = true;
+    setReaderReady(true);
     setReaderError(null);
     readerLog.info("Reader ready");
   }, []);
 
   const handleError = useCallback((reason: string) => {
     readerLog.error("Reader error:", reason);
+    if (!readerReadyRef.current) {
+      readerLog.info("Ignoring error before reader is ready");
+      return;
+    }
     setReaderError(reason || "This section could not be rendered.");
     setShowHeader(true);
   }, []);
 
   const handleRetryReader = useCallback(() => {
+    readerReadyRef.current = false;
+    setReaderReady(false);
     setReaderError(null);
     setReaderInstanceKey((currentKey) => currentKey + 1);
   }, []);
@@ -196,6 +212,8 @@ const ReaderScreen = () => {
         currentChapterHref={currentChapterHref}
         readerError={readerError}
         readerInstanceKey={readerInstanceKey}
+        readerReady={readerReady}
+        statusBarStyle={statusBarStyle}
         colors={colors}
         onReaderTap={handleReaderTap}
         onClose={handleClose}
@@ -225,6 +243,8 @@ interface ReaderContentProps {
   currentChapterHref?: string;
   readerError: string | null;
   readerInstanceKey: number;
+  readerReady: boolean;
+  statusBarStyle: "light" | "dark";
   colors: Record<string, string>;
   onReaderTap: () => void;
   onClose: () => void | Promise<void>;
@@ -308,6 +328,8 @@ function ReaderContent({
   currentChapterHref,
   readerError,
   readerInstanceKey,
+  readerReady,
+  statusBarStyle,
   colors,
   onReaderTap,
   onClose,
@@ -395,7 +417,7 @@ function ReaderContent({
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar hidden={!showHeader} />
+      <StatusBar hidden={!showHeader} style={statusBarStyle} />
 
       {/* Reader Content */}
       <Pressable style={styles.readerContainer} onPress={handleReaderPress}>
@@ -410,6 +432,9 @@ function ReaderContent({
           onError={onError}
         />
       </Pressable>
+
+      {/* Loading overlay — blocks touches until epub is ready */}
+      {!readerReady && <View style={styles.loadingOverlay} />}
 
       {readerError && (
         <View
@@ -602,6 +627,12 @@ const styles = StyleSheet.create({
   },
   readerContainer: {
     flex: 1,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 110,
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
