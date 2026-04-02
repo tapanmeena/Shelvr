@@ -5,6 +5,7 @@ import {
   useThemeColors,
 } from "@/src/stores/preferencesStore";
 import { tamaguiConfig } from "@/src/theme";
+import { ErrorBoundary } from "@/src/components/ErrorBoundary";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useRef } from "react";
@@ -98,7 +99,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider>
-        <AppContent />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
