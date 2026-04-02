@@ -26,6 +26,20 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const booksRef = useRef(books);
   booksRef.current = books;
+  const searchSeqRef = useRef(0);
+
+  const filterInMemory = useCallback((query: string): Set<string> => {
+    const lower = query.toLowerCase();
+    return new Set(
+      booksRef.current
+        .filter(
+          (book) =>
+            book.title.toLowerCase().includes(lower) ||
+            book.authors?.some((a) => a.toLowerCase().includes(lower)),
+        )
+        .map((b) => b.id),
+    );
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) {
@@ -38,26 +52,26 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
       return;
     }
 
+    const seq = ++searchSeqRef.current;
+
     debounceRef.current = setTimeout(async () => {
-      try {
-        if (!db) {
-          return;
+      if (!db) {
+        if (seq === searchSeqRef.current) {
+          setMatchedIds(filterInMemory(trimmed));
         }
+        return;
+      }
+
+      try {
         const results = await repository.searchBooks(db, trimmed);
-        setMatchedIds(new Set(results.map((b) => b.id)));
+        if (seq === searchSeqRef.current) {
+          setMatchedIds(new Set(results.map((b) => b.id)));
+        }
       } catch (err) {
         libraryLog.error("DB search failed, falling back to in-memory:", err);
-        const query = trimmed.toLowerCase();
-        const ids = new Set(
-          booksRef.current
-            .filter(
-              (book) =>
-                book.title.toLowerCase().includes(query) ||
-                book.authors?.some((a) => a.toLowerCase().includes(query)),
-            )
-            .map((b) => b.id),
-        );
-        setMatchedIds(ids);
+        if (seq === searchSeqRef.current) {
+          setMatchedIds(filterInMemory(trimmed));
+        }
       }
     }, DEBOUNCE_MS);
 
@@ -66,7 +80,7 @@ export function useBookSearch(books: BookWithProgress[]): UseBookSearchReturn {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [searchQuery, db]);
+  }, [searchQuery, db, filterInMemory]);
 
   const filteredBooks =
     matchedIds === null

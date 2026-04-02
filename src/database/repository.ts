@@ -30,10 +30,11 @@ export const searchBooks = async (
   db: SQLiteDatabase,
   query: string,
 ): Promise<Book[]> => {
-  const searchPattern = `%${query}%`;
+  const escaped = query.replace(/[%_\\]/g, "\\$&");
+  const searchPattern = `%${escaped}%`;
   const rows = await db.getAllAsync<BookRow>(
     `SELECT * FROM books
-    WHERE title LIKE ? OR authors LIKE ?
+    WHERE title LIKE ? ESCAPE '\\' OR authors LIKE ? ESCAPE '\\'
     ORDER BY updated_at DESC`,
     [searchPattern, searchPattern],
   );
