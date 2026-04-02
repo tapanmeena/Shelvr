@@ -49,6 +49,15 @@ export interface BookWithProgress extends Book {
   progress?: ReadingProgress;
 }
 
+export interface ImportingBook {
+  id: string;
+  title: string;
+  authors?: string[];
+  coverPath?: string;
+  isImporting: true;
+  statusLabel: string;
+}
+
 export interface ShelfWithPreview extends Shelf {
   bookCount: number;
   /** First 4 book cover paths (null if book has no cover) */

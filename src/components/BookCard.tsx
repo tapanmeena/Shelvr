@@ -1,12 +1,19 @@
 import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import type { BookWithProgress } from "@/src/types";
+import type { BookWithProgress, ImportingBook } from "@/src/types";
 
 interface BookCardProps {
-  book: BookWithProgress;
-  onPress: () => void;
+  book: BookWithProgress | ImportingBook;
+  onPress?: () => void;
   onLongPress?: () => void;
 }
 
@@ -35,8 +42,16 @@ function getPlaceholderColor(title: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+function isImportingPreview(
+  book: BookWithProgress | ImportingBook,
+): book is ImportingBook {
+  return "isImporting" in book && book.isImporting;
+}
+
 export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
   const themeColors = useThemeColors();
+  const isImportingBook = isImportingPreview(book);
+  const libraryBook = isImportingBook ? null : book;
 
   const colors = {
     card: themeColors.card,
@@ -47,19 +62,20 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
     komgaBadge: "#0ea5e9", // Sky blue for Komga
   };
 
-  const progressPercentage = book.progress?.percentage ?? 0;
+  const progressPercentage = libraryBook?.progress?.percentage ?? 0;
   const hasProgress = progressPercentage > 0;
-  const isKomgaBook = book.source === "komga";
+  const isKomgaBook = libraryBook?.source === "komga";
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
         { backgroundColor: colors.card, borderColor: colors.border },
-        pressed && styles.pressed,
+        pressed && !isImportingBook && styles.pressed,
       ]}
       onPress={onPress}
       onLongPress={onLongPress}
+      disabled={isImportingBook || !onPress}
     >
       <View style={styles.coverContainer}>
         {book.coverPath ? (
@@ -90,6 +106,12 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
                 </Text>
               )}
             </View>
+          </View>
+        )}
+        {isImportingBook && (
+          <View style={styles.importingOverlay}>
+            <ActivityIndicator size="small" color="#fff" />
+            <Text style={styles.importingLabel}>Importing</Text>
           </View>
         )}
         {/* Komga badge */}
@@ -125,15 +147,28 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
         >
           {book.authors && book.authors.length > 0
             ? book.authors.join(", ")
-            : " "}
+            : isImportingBook
+              ? "Metadata pending"
+              : " "}
         </Text>
         <Text
           style={[
             styles.progress,
-            { color: hasProgress ? colors.progress : "transparent" },
+            {
+              color: isImportingBook
+                ? colors.subtext
+                : hasProgress
+                  ? colors.progress
+                  : "transparent",
+            },
           ]}
+          numberOfLines={1}
         >
-          {hasProgress ? `${(progressPercentage * 100).toFixed(2)}%` : " "}
+          {isImportingBook
+            ? book.statusLabel
+            : hasProgress
+              ? `${(progressPercentage * 100).toFixed(2)}%`
+              : " "}
         </Text>
       </View>
     </Pressable>
@@ -198,6 +233,18 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
+  },
+  importingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  importingLabel: {
+    color: "rgba(255, 255, 255, 0.92)",
+    fontSize: 12,
+    fontWeight: "600",
   },
   komgaBadge: {
     position: "absolute",

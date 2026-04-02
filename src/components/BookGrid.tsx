@@ -1,14 +1,19 @@
 import { useCallback, useMemo } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 
-import type { BookWithProgress } from "@/src/types";
+import type { BookWithProgress, ImportingBook } from "@/src/types";
 
 import { BookCard } from "./BookCard";
 
-type GridItem = BookWithProgress | { id: string; _spacer: true };
+type GridItem = BookWithProgress | ImportingBook | { id: string; _spacer: true };
+
+const isImportingGridBook = (
+  item: BookWithProgress | ImportingBook,
+): item is ImportingBook => "isImporting" in item && item.isImporting;
 
 interface BookGridProps {
   books: BookWithProgress[];
+  importingBook?: ImportingBook | null;
   onBookPress: (book: BookWithProgress) => void;
   onBookLongPress?: (book: BookWithProgress) => void;
   ListEmptyComponent?: React.ReactElement;
@@ -24,6 +29,7 @@ const INITIAL_NUM_TO_RENDER = 8; // Initial items to render
 
 export function BookGrid({
   books,
+  importingBook,
   onBookPress,
   onBookLongPress,
   ListEmptyComponent,
@@ -37,18 +43,22 @@ export function BookGrid({
   const minColumnWidth = 140;
   const numColumns = Math.max(2, Math.floor(width / minColumnWidth));
   const columnWidth = (width - 32 - (numColumns - 1) * 12) / numColumns;
+  const gridBooks = useMemo(
+    () => (importingBook ? [importingBook, ...books] : books),
+    [books, importingBook],
+  );
 
   // Pad data with spacers so the last row never stretches
   const paddedData = useMemo<GridItem[]>(() => {
-    if (books.length === 0) return books;
-    const remainder = books.length % numColumns;
-    if (remainder === 0) return books;
+    if (gridBooks.length === 0) return gridBooks;
+    const remainder = gridBooks.length % numColumns;
+    if (remainder === 0) return gridBooks;
     const spacers = Array.from({ length: numColumns - remainder }, (_, i) => ({
       id: `_spacer_${i}`,
       _spacer: true as const,
     }));
-    return [...books, ...spacers];
-  }, [books, numColumns]);
+    return [...gridBooks, ...spacers];
+  }, [gridBooks, numColumns]);
 
   // Memoize item layout calculations for better performance
   const getItemLayout = useMemo(() => {
@@ -72,6 +82,15 @@ export function BookGrid({
       if ("_spacer" in item) {
         return <View style={{ width: columnWidth }} />;
       }
+
+      if (isImportingGridBook(item)) {
+        return (
+          <View style={{ width: columnWidth }}>
+            <BookCard book={item} />
+          </View>
+        );
+      }
+
       return (
         <View style={{ width: columnWidth }}>
           <BookCard

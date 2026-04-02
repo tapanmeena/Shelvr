@@ -86,6 +86,7 @@ const LibraryContent = () => {
   const { books, isLoading, error, refresh } = useLibrary();
   const {
     isImporting,
+    importingBook,
     error: importError,
     importBook,
     clearError,
@@ -96,9 +97,6 @@ const LibraryContent = () => {
   // Filter & sort state
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
-
-  // Toast state
-  const [importSuccess, setImportSuccess] = useState(false);
 
   const processedBooks = useMemo(() => {
     let result = filteredBooks;
@@ -148,10 +146,8 @@ const LibraryContent = () => {
 
   const handleImport = async () => {
     clearError();
-    setImportSuccess(false);
     const success = await importBook();
     if (success) {
-      setImportSuccess(true);
       refresh();
     }
   };
@@ -416,6 +412,7 @@ const LibraryContent = () => {
       ) : (
         <BookGrid
           books={processedBooks}
+          importingBook={importingBook}
           onBookPress={handleBookPress}
           onBookLongPress={handleBookLongPress}
           refreshing={isLoading}
@@ -458,19 +455,12 @@ const LibraryContent = () => {
         <Ionicons name="add" size={28} color="#fff" />
       </Pressable>
 
-      {/* Import Toast */}
+      {/* Import Error Toast */}
       <Toast
-        visible={isImporting || importSuccess || !!importError}
-        variant={isImporting ? "loading" : importError ? "error" : "success"}
-        message={
-          isImporting
-            ? "Importing book..."
-            : importError
-              ? importError
-              : "Book imported!"
-        }
+        visible={!!importError}
+        variant="error"
+        message={importError ?? ""}
         onDismiss={() => {
-          setImportSuccess(false);
           clearError();
         }}
       />

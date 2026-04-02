@@ -23,6 +23,17 @@ interface ImportResult {
   error?: string;
 }
 
+export interface ImportBookProgressUpdate {
+  title?: string;
+  authors?: string[];
+  coverPath?: string;
+  statusLabel?: string;
+}
+
+interface ImportBookOptions {
+  onProgress?: (update: ImportBookProgressUpdate) => void;
+}
+
 // Ensure the book directory exists
 const ensureBooksDirectory = async (): Promise<void> => {
   const dirInfo = await FileSystem.getInfoAsync(BOOKS_DIRECTORY);
@@ -36,8 +47,11 @@ const ensureBooksDirectory = async (): Promise<void> => {
 // Import ePUB file into the library
 export const importBook = async (
   pickedFile: PickedFile,
+  options?: ImportBookOptions,
 ): Promise<ImportResult> => {
   try {
+    options?.onProgress?.({ statusLabel: "Validating ePUB" });
+
     // Validate the ePUB file
     const validation = await validateEpubFile(pickedFile.uri);
     if (!validation.valid) {
@@ -56,6 +70,7 @@ export const importBook = async (
     const destinationPath = `${BOOKS_DIRECTORY}${bookId}/${sanitizedName}`;
 
     // Copy file to app storage
+    options?.onProgress?.({ statusLabel: "Copying file" });
     libraryLog.debug("Copying file to :", destinationPath);
     await FileSystem.copyAsync({
       from: pickedFile.uri,
@@ -69,7 +84,14 @@ export const importBook = async (
     }
 
     // Parse metadata
+    options?.onProgress?.({ statusLabel: "Reading metadata" });
     const metadata = await parseEpubMetadata(destinationPath);
+
+    options?.onProgress?.({
+      title: metadata.title,
+      authors: metadata.authors.length > 0 ? metadata.authors : undefined,
+      statusLabel: metadata.coverBase64 ? "Loading cover" : "Saving book",
+    });
 
     // Save cover image to filesystem if present
     let coverPath: string | undefined;
@@ -88,6 +110,10 @@ export const importBook = async (
           encoding: FileSystem.EncodingType.Base64,
         });
         libraryLog.debug("Saved cover image to:", coverPath);
+        options?.onProgress?.({
+          coverPath,
+          statusLabel: "Saving book",
+        });
       } catch (err) {
         libraryLog.warn("Failed to save cover image:", err);
       }
@@ -111,6 +137,13 @@ export const importBook = async (
       createdAt: now,
       updatedAt: now,
     };
+
+    options?.onProgress?.({
+      title: book.title,
+      authors: book.authors,
+      coverPath: book.coverPath,
+      statusLabel: "Finishing import",
+    });
 
     libraryLog.info("Book imported successfully:", book.title);
     return { success: true, book };
