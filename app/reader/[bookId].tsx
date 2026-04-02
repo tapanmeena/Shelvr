@@ -368,7 +368,9 @@ function ReaderContent({
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <StatusBar hidden={!showHeader} />
 
       {/* Reader Content */}
@@ -548,7 +550,7 @@ function ReaderContent({
       >
         <ReaderSettings onClose={onCloseSettings} />
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
