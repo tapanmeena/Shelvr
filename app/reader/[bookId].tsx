@@ -18,7 +18,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   AppState,
@@ -371,6 +371,42 @@ function ReaderContent({
 
   const { toc, goToLocation, goPrevious, goNext, section } = useEpubReader();
   const { width: screenWidth } = useWindowDimensions();
+  const pageAnimation = usePreferencesStore((s) => s.pageAnimation);
+
+  // Page flip animation
+  const pageAnimValue = useRef(new Animated.Value(0)).current;
+
+  const playPageFlip = useCallback(
+    (direction: "left" | "right") => {
+      if (pageAnimation === "none") return;
+
+      const isSlide = pageAnimation === "slide";
+      const startValue = isSlide ? (direction === "left" ? 30 : -30) : 0;
+
+      pageAnimValue.setValue(startValue);
+      Animated.timing(pageAnimValue, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    },
+    [pageAnimation, pageAnimValue],
+  );
+
+  const pageFlipStyle = useMemo(() => {
+    if (pageAnimation === "slide") {
+      return { transform: [{ translateX: pageAnimValue }] };
+    }
+    if (pageAnimation === "fade") {
+      return {
+        opacity: pageAnimValue.interpolate({
+          inputRange: [-30, 0, 30],
+          outputRange: [0.4, 1, 0.4],
+        }),
+      };
+    }
+    return {};
+  }, [pageAnimation, pageAnimValue]);
 
   const [showTapZoneHint, setShowTapZoneHint] = useState(true);
 
@@ -381,14 +417,16 @@ function ReaderContent({
       const rightBound = screenWidth * 0.75;
 
       if (tapX < leftBound) {
+        playPageFlip("right");
         goPrevious();
       } else if (tapX > rightBound) {
+        playPageFlip("left");
         goNext();
       } else {
         onReaderTap();
       }
     },
-    [screenWidth, goPrevious, goNext, onReaderTap],
+    [screenWidth, goPrevious, goNext, onReaderTap, playPageFlip],
   );
 
   // Dismiss the tap zone hint after the animation finishes
@@ -421,16 +459,18 @@ function ReaderContent({
 
       {/* Reader Content */}
       <Pressable style={styles.readerContainer} onPress={handleReaderPress}>
-        <Reader
-          key={`${book.id}-${readerInstanceKey}`}
-          bookPath={book.filePath}
-          initialLocation={initialLocation}
-          initialLocations={initialLocations}
-          onLocationChange={onLocationChange}
-          onLocationsReady={onLocationsReady}
-          onReady={onReady}
-          onError={onError}
-        />
+        <Animated.View style={[styles.readerContainer, pageFlipStyle]}>
+          <Reader
+            key={`${book.id}-${readerInstanceKey}`}
+            bookPath={book.filePath}
+            initialLocation={initialLocation}
+            initialLocations={initialLocations}
+            onLocationChange={onLocationChange}
+            onLocationsReady={onLocationsReady}
+            onReady={onReady}
+            onError={onError}
+          />
+        </Animated.View>
       </Pressable>
 
       {/* Loading overlay — blocks touches until epub is ready */}
@@ -556,7 +596,10 @@ function ReaderContent({
           <View style={styles.footer}>
             <View style={styles.progressRow}>
               <Pressable
-                onPress={() => goPrevious()}
+                onPress={() => {
+                  playPageFlip("right");
+                  goPrevious();
+                }}
                 style={styles.navArrow}
                 hitSlop={8}
               >
@@ -570,7 +613,10 @@ function ReaderContent({
                 <ProgressBar progress={currentProgress * 100} />
               </View>
               <Pressable
-                onPress={() => goNext()}
+                onPress={() => {
+                  playPageFlip("left");
+                  goNext();
+                }}
                 style={styles.navArrow}
                 hitSlop={8}
               >

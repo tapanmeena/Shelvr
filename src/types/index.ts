@@ -13,6 +13,7 @@ export {
   AccentColorSchema,
   LibraryViewModeSchema,
   ShelvesViewModeSchema,
+  PageAnimationSchema,
   ShelfSchema,
   BookShelfSchema,
   ReadingProgressSchema,
@@ -25,6 +26,7 @@ export {
   type BookSource,
   type FontFamily,
   type LibraryViewMode,
+  type PageAnimation,
   type ReadingProgress,
   type Shelf,
   type ShelvesViewMode,
@@ -40,6 +42,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   lineSpacing: 1.5,
   libraryViewMode: "grid",
   shelvesViewMode: "cards",
+  pageAnimation: "slide",
   reopenLastBookOnLaunch: false,
   hasCompletedOnboarding: false,
 };
