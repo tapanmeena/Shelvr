@@ -141,9 +141,21 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View style={styles.content}>
             {/* Header */}
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              Shelvr
-            </Text>
+            <View style={styles.headerRow}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Shelvr
+              </Text>
+              <Pressable
+                onPress={() => router.push("/settings" as any)}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={24}
+                  color={colors.text}
+                />
+              </Pressable>
+            </View>
 
             {/* Continue Reading */}
             {continueBook && (
@@ -327,13 +339,18 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingBottom: 24 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
   headerTitle: {
     fontSize: 32,
     fontWeight: "800",
     letterSpacing: -0.8,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
   },
   section: {
     marginBottom: 24,

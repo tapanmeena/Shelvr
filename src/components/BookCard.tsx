@@ -119,19 +119,22 @@ export function BookCard({ book, onPress, onLongPress }: BookCardProps) {
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {book.title}
         </Text>
-        {book.authors && book.authors.length > 0 && (
-          <Text
-            style={[styles.author, { color: colors.subtext }]}
-            numberOfLines={1}
-          >
-            {book.authors.join(", ")}
-          </Text>
-        )}
-        {hasProgress && (
-          <Text style={[styles.progress, { color: colors.progress }]}>
-            {(progressPercentage * 100).toFixed(2)}%
-          </Text>
-        )}
+        <Text
+          style={[styles.author, { color: colors.subtext }]}
+          numberOfLines={1}
+        >
+          {book.authors && book.authors.length > 0
+            ? book.authors.join(", ")
+            : " "}
+        </Text>
+        <Text
+          style={[
+            styles.progress,
+            { color: hasProgress ? colors.progress : "transparent" },
+          ]}
+        >
+          {hasProgress ? `${(progressPercentage * 100).toFixed(2)}%` : " "}
+        </Text>
       </View>
     </Pressable>
   );
@@ -205,10 +208,13 @@ const styles = StyleSheet.create({
   },
   info: {
     padding: 8,
+    minHeight: 72,
   },
   title: {
     fontSize: 14,
     fontWeight: "600",
+    lineHeight: 18,
+    height: 36, // Reserve space for 2 lines
     marginBottom: 4,
   },
   author: {

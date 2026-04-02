@@ -26,12 +26,6 @@ const TAB_ITEMS: TabItem[] = [
     icon: "layers-outline",
     iconFocused: "layers",
   },
-  {
-    name: "search",
-    title: "Search",
-    icon: "search-outline",
-    iconFocused: "search",
-  },
 ];
 
 export default function TabLayout() {

@@ -5,6 +5,8 @@ import type { BookWithProgress } from "@/src/types";
 
 import { BookCard } from "./BookCard";
 
+type GridItem = BookWithProgress | { id: string; _spacer: true };
+
 interface BookGridProps {
   books: BookWithProgress[];
   onBookPress: (book: BookWithProgress) => void;
@@ -36,6 +38,18 @@ export function BookGrid({
   const numColumns = Math.max(2, Math.floor(width / minColumnWidth));
   const columnWidth = (width - 32 - (numColumns - 1) * 12) / numColumns;
 
+  // Pad data with spacers so the last row never stretches
+  const paddedData = useMemo<GridItem[]>(() => {
+    if (books.length === 0) return books;
+    const remainder = books.length % numColumns;
+    if (remainder === 0) return books;
+    const spacers = Array.from({ length: numColumns - remainder }, (_, i) => ({
+      id: `_spacer_${i}`,
+      _spacer: true as const,
+    }));
+    return [...books, ...spacers];
+  }, [books, numColumns]);
+
   // Memoize item layout calculations for better performance
   const getItemLayout = useMemo(() => {
     // Approximate item height (cover aspect ratio 2:3 + info section)
@@ -50,21 +64,26 @@ export function BookGrid({
   }, [columnWidth, numColumns]);
 
   // Memoize key extractor
-  const keyExtractor = useCallback((item: BookWithProgress) => item.id, []);
+  const keyExtractor = useCallback((item: GridItem) => item.id, []);
 
   // Memoize render item
   const renderItem = useCallback(
-    ({ item }: { item: BookWithProgress }) => (
-      <View style={[styles.item, { width: columnWidth }]}>
-        <BookCard
-          book={item}
-          onPress={() => onBookPress(item)}
-          onLongPress={
-            onBookLongPress ? () => onBookLongPress(item) : undefined
-          }
-        />
-      </View>
-    ),
+    ({ item }: { item: GridItem }) => {
+      if ("_spacer" in item) {
+        return <View style={{ width: columnWidth }} />;
+      }
+      return (
+        <View style={{ width: columnWidth }}>
+          <BookCard
+            book={item}
+            onPress={() => onBookPress(item)}
+            onLongPress={
+              onBookLongPress ? () => onBookLongPress(item) : undefined
+            }
+          />
+        </View>
+      );
+    },
     [columnWidth, onBookPress, onBookLongPress],
   );
 
@@ -76,7 +95,7 @@ export function BookGrid({
 
   return (
     <FlatList
-      data={books}
+      data={paddedData}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       numColumns={numColumns}
@@ -107,8 +126,5 @@ const styles = StyleSheet.create({
   row: {
     gap: 12,
     marginBottom: 12,
-  },
-  item: {
-    flex: 1,
   },
 });

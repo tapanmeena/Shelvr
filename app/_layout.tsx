@@ -71,6 +71,13 @@ function AppContent() {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="settings"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
         </Stack>
       </DatabaseProvider>
     </TamaguiProvider>

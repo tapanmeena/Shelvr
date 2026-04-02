@@ -5,3 +5,4 @@ export { ErrorBoundary } from "./ErrorBoundary";
 export { LoadingSpinner } from "./LoadingSpinner";
 export { ProgressBar } from "./ProgressBar";
 export { ThemePicker } from "./ThemePicker";
+export { Toast } from "./Toast";

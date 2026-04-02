@@ -1,6 +1,7 @@
 import { BookGrid } from "@/src/components/BookGrid";
 import { EmptyState } from "@/src/components/EmptyState";
 import { LoadingSpinner } from "@/src/components/LoadingSpinner";
+import { Toast } from "@/src/components/Toast";
 import * as repository from "@/src/database/repository";
 import { useDatabase, useDatabaseStatus } from "@/src/database/useDatabase";
 import { DeleteBookModal } from "@/src/features/library/components/DeleteBookModal";
@@ -17,18 +18,35 @@ import { libraryLog } from "@/src/utils/logger";
 import { Ionicons } from "@expo/vector-icons";
 import { File } from "expo-file-system";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+type FilterStatus = "all" | "reading" | "unread" | "finished";
+type SortBy = "recent" | "title" | "author";
+
+const FILTER_OPTIONS: { key: FilterStatus; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "reading", label: "Reading" },
+  { key: "unread", label: "Unread" },
+  { key: "finished", label: "Finished" },
+];
+
+const SORT_OPTIONS: { key: SortBy; label: string }[] = [
+  { key: "recent", label: "Recent" },
+  { key: "title", label: "Title" },
+  { key: "author", label: "Author" },
+];
 
 export default function LibraryScreen() {
   const colors = useThemeColors();
@@ -75,6 +93,43 @@ const LibraryContent = () => {
   const { searchQuery, setSearchQuery, filteredBooks, clearSearch } =
     useBookSearch(books);
 
+  // Filter & sort state
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
+
+  // Toast state
+  const [importSuccess, setImportSuccess] = useState(false);
+
+  const processedBooks = useMemo(() => {
+    let result = filteredBooks;
+
+    if (filterStatus === "reading") {
+      result = result.filter(
+        (b) =>
+          b.progress &&
+          b.progress.percentage > 0 &&
+          b.progress.percentage < 1.0,
+      );
+    } else if (filterStatus === "unread") {
+      result = result.filter((b) => !b.progress || b.progress.percentage === 0);
+    } else if (filterStatus === "finished") {
+      result = result.filter((b) => b.progress && b.progress.percentage >= 1.0);
+    }
+
+    result = [...result].sort((a, b) => {
+      if (sortBy === "title") {
+        return a.title.localeCompare(b.title);
+      } else if (sortBy === "author") {
+        const aAuthor = a.authors?.[0] ?? "";
+        const bAuthor = b.authors?.[0] ?? "";
+        return aAuthor.localeCompare(bAuthor);
+      }
+      return b.updatedAt - a.updatedAt;
+    });
+
+    return result;
+  }, [filteredBooks, filterStatus, sortBy]);
+
   // Delete modal state
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<BookWithProgress | null>(
@@ -93,8 +148,10 @@ const LibraryContent = () => {
 
   const handleImport = async () => {
     clearError();
+    setImportSuccess(false);
     const success = await importBook();
     if (success) {
+      setImportSuccess(true);
       refresh();
     }
   };
@@ -284,17 +341,72 @@ const LibraryContent = () => {
         </View>
       )}
 
-      {/* Import Error */}
-      {importError && (
-        <View
-          style={[styles.errorBanner, { backgroundColor: colors.error + "1A" }]}
-        >
-          <Text style={[styles.errorText, { color: colors.error }]}>
-            {importError}
-          </Text>
-          <Pressable onPress={clearError}>
-            <Ionicons name="close" size={20} color={colors.error} />
-          </Pressable>
+      {/* Filter & Sort Chips */}
+      {books.length > 0 && (
+        <View style={styles.chipSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+          >
+            {FILTER_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      filterStatus === opt.key ? colors.accent : colors.surface,
+                    borderColor:
+                      filterStatus === opt.key ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => setFilterStatus(opt.key)}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color: filterStatus === opt.key ? "#fff" : colors.text,
+                    },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+
+            <View
+              style={[styles.chipDivider, { backgroundColor: colors.border }]}
+            />
+
+            {SORT_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      sortBy === opt.key ? colors.accent : colors.surface,
+                    borderColor:
+                      sortBy === opt.key ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => setSortBy(opt.key)}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color: sortBy === opt.key ? "#fff" : colors.text,
+                    },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       )}
 
@@ -303,7 +415,7 @@ const LibraryContent = () => {
         <LoadingSpinner message="Loading books..." />
       ) : (
         <BookGrid
-          books={filteredBooks}
+          books={processedBooks}
           onBookPress={handleBookPress}
           onBookLongPress={handleBookLongPress}
           refreshing={isLoading}
@@ -343,12 +455,25 @@ const LibraryContent = () => {
         onPress={handleImport}
         disabled={isImporting}
       >
-        {isImporting ? (
-          <LoadingSpinner size="small" />
-        ) : (
-          <Ionicons name="add" size={28} color="#fff" />
-        )}
+        <Ionicons name="add" size={28} color="#fff" />
       </Pressable>
+
+      {/* Import Toast */}
+      <Toast
+        visible={isImporting || importSuccess || !!importError}
+        variant={isImporting ? "loading" : importError ? "error" : "success"}
+        message={
+          isImporting
+            ? "Importing book..."
+            : importError
+              ? importError
+              : "Book imported!"
+        }
+        onDismiss={() => {
+          setImportSuccess(false);
+          clearError();
+        }}
+      />
 
       {/* Delete Book Modal */}
       <DeleteBookModal
@@ -440,17 +565,27 @@ const styles = StyleSheet.create({
   fabDisabled: {
     opacity: 0.7,
   },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 12,
-    borderRadius: 12,
+  chipSection: {
+    paddingBottom: 8,
   },
-  errorText: {
-    flex: 1,
-    fontSize: 14,
+  chipRow: {
+    paddingHorizontal: 16,
+    gap: 8,
+    alignItems: "center",
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  chipDivider: {
+    width: 1,
+    height: 20,
+    marginHorizontal: 4,
   },
 });
