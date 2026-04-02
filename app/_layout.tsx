@@ -1,4 +1,7 @@
-import { DatabaseProvider } from "@/src/database/useDatabase";
+import {
+  DatabaseProvider,
+  useDatabaseStatus,
+} from "@/src/database/useDatabase";
 import {
   usePreferencesStore,
   useTamaguiThemeName,
@@ -21,10 +24,6 @@ function useOnboardingRedirect() {
   const hasCompletedOnboarding = usePreferencesStore(
     (s) => s.hasCompletedOnboarding,
   );
-  const reopenLastBookOnLaunch = usePreferencesStore(
-    (s) => s.reopenLastBookOnLaunch,
-  );
-  const lastOpenedBookId = usePreferencesStore((s) => s.lastOpenedBookId);
   const hasNavigated = useRef(false);
 
   useEffect(() => {
@@ -42,16 +41,39 @@ function useOnboardingRedirect() {
     ) {
       hasNavigated.current = true;
       router.replace("/(tabs)" as any);
-    } else if (
-      hasCompletedOnboarding &&
-      reopenLastBookOnLaunch &&
-      lastOpenedBookId &&
-      !hasNavigated.current
-    ) {
+    }
+  }, [isHydrated, hasCompletedOnboarding]);
+}
+
+/** Navigates to the last-read book once DB is ready. Runs inside DatabaseProvider. */
+function useReopenLastBook() {
+  const router = useRouter();
+  const { isReady: dbReady } = useDatabaseStatus();
+  const isHydrated = usePreferencesStore((s) => s.isHydrated);
+  const hasCompletedOnboarding = usePreferencesStore(
+    (s) => s.hasCompletedOnboarding,
+  );
+  const reopenLastBookOnLaunch = usePreferencesStore(
+    (s) => s.reopenLastBookOnLaunch,
+  );
+  const lastOpenedBookId = usePreferencesStore((s) => s.lastOpenedBookId);
+  const hasNavigated = useRef(false);
+
+  useEffect(() => {
+    if (!isHydrated || !dbReady || !hasCompletedOnboarding) return;
+
+    console.log("[ReopenBook] ready:", {
+      reopenLastBookOnLaunch,
+      lastOpenedBookId,
+      hasNavigated: hasNavigated.current,
+    });
+
+    if (reopenLastBookOnLaunch && lastOpenedBookId && !hasNavigated.current) {
+      console.log("[ReopenBook] navigating to reader:", lastOpenedBookId);
       hasNavigated.current = true;
       router.push(`/reader/${lastOpenedBookId}` as any);
     }
-  }, [isHydrated, hasCompletedOnboarding]);
+  }, [isHydrated, dbReady, hasCompletedOnboarding]);
 }
 
 function AppContent() {
@@ -65,6 +87,7 @@ function AppContent() {
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={themeName}>
       <DatabaseProvider>
+        <ReopenLastBookGate />
         <StatusBar style={statusBarStyle} />
         <Stack
           screenOptions={{
@@ -98,6 +121,12 @@ function AppContent() {
       </DatabaseProvider>
     </TamaguiProvider>
   );
+}
+
+/** Renderless component that runs useReopenLastBook inside DatabaseProvider */
+function ReopenLastBookGate() {
+  useReopenLastBook();
+  return null;
 }
 
 export default function RootLayout() {
