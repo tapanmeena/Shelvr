@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   AppState,
+  Easing,
   type GestureResponderEvent,
   Modal,
   Pressable,
@@ -374,44 +375,58 @@ function ReaderContent({
   const pageAnimation = usePreferencesStore((s) => s.pageAnimation);
 
   // Page flip animation
-  const pageAnimValue = useRef(new Animated.Value(0)).current;
+  const pageSlideValue = useRef(new Animated.Value(0)).current;
+  const pageOpacityValue = useRef(new Animated.Value(1)).current;
 
   const playPageFlip = useCallback(
     (direction: "left" | "right") => {
       if (pageAnimation === "none") return;
 
-      const isSlide = pageAnimation === "slide";
-      const startValue = isSlide ? (direction === "left" ? 30 : -30) : 0;
-
-      pageAnimValue.setValue(startValue);
-      Animated.timing(pageAnimValue, {
-        toValue: 0,
-        duration: 180,
-        useNativeDriver: true,
-      }).start();
+      if (pageAnimation === "slide") {
+        const from =
+          direction === "left" ? screenWidth * 0.3 : -screenWidth * 0.3;
+        pageSlideValue.setValue(from);
+        Animated.timing(pageSlideValue, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      } else {
+        // Fade
+        pageOpacityValue.setValue(0.15);
+        Animated.timing(pageOpacityValue, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: false,
+        }).start();
+      }
     },
-    [pageAnimation, pageAnimValue],
+    [pageAnimation, pageSlideValue, pageOpacityValue, screenWidth],
   );
 
   const pageFlipStyle = useMemo(() => {
     if (pageAnimation === "slide") {
-      return { transform: [{ translateX: pageAnimValue }] };
+      return { transform: [{ translateX: pageSlideValue }] };
     }
     if (pageAnimation === "fade") {
-      return {
-        opacity: pageAnimValue.interpolate({
-          inputRange: [-30, 0, 30],
-          outputRange: [0.4, 1, 0.4],
-        }),
-      };
+      return { opacity: pageOpacityValue };
     }
     return {};
-  }, [pageAnimation, pageAnimValue]);
+  }, [pageAnimation, pageSlideValue, pageOpacityValue]);
 
   const [showTapZoneHint, setShowTapZoneHint] = useState(true);
 
+  const swipeActiveRef = useRef(false);
+
   const handleReaderPress = useCallback(
     (event: GestureResponderEvent) => {
+      if (swipeActiveRef.current) {
+        swipeActiveRef.current = false;
+        return;
+      }
+
       const tapX = event.nativeEvent.locationX;
       const leftBound = screenWidth * 0.25;
       const rightBound = screenWidth * 0.75;
@@ -469,6 +484,14 @@ function ReaderContent({
             onLocationsReady={onLocationsReady}
             onReady={onReady}
             onError={onError}
+            onSwipeLeft={() => {
+              swipeActiveRef.current = true;
+              playPageFlip("left");
+            }}
+            onSwipeRight={() => {
+              swipeActiveRef.current = true;
+              playPageFlip("right");
+            }}
           />
         </Animated.View>
       </Pressable>
@@ -673,6 +696,7 @@ const styles = StyleSheet.create({
   },
   readerContainer: {
     flex: 1,
+    overflow: "hidden",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
