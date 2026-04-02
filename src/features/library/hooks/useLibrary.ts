@@ -33,7 +33,7 @@ const useLibrary = (): UseLibraryReturn => {
         return;
       }
 
-      // Load books fromd atabase
+      // Load books from database
       const dbBooks = await repository.getAllBooks(db);
       setBooks(dbBooks);
 

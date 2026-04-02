@@ -36,7 +36,7 @@ const CREATE_MIGRATIONS_TABLE = `
   );
 `;
 
-// Runn all pending migrations
+// Run all pending migrations
 export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
   // Create migrations tracking table
   await db.execAsync(CREATE_MIGRATIONS_TABLE);
@@ -47,7 +47,7 @@ export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
   );
   const currentVersion = result?.version ?? 0; // 0 means, initial table creation
 
-  dbLog.info(`Curretn schema version: ${currentVersion}`);
+  dbLog.info(`Current schema version: ${currentVersion}`);
 
   // Run pending migrations
   for (const migration of migrations) {
