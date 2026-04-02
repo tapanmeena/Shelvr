@@ -1,6 +1,7 @@
 import { useThemeColors } from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemePicker } from "@/src/components/ThemePicker";
 import { FontPicker } from "./FontPicker";
@@ -16,7 +17,10 @@ export function ReaderSettings({ onClose }: ReaderSettingsProps) {
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top", "bottom"]}
+    >
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>
           Reading Settings
@@ -48,7 +52,7 @@ export function ReaderSettings({ onClose }: ReaderSettingsProps) {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

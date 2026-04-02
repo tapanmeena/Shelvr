@@ -9,7 +9,6 @@ import type { PageAnimation } from "@/src/types";
 const OPTIONS: { id: PageAnimation; label: string }[] = [
   { id: "none", label: "None" },
   { id: "slide", label: "Slide" },
-  { id: "fade", label: "Fade" },
 ];
 
 export function PageAnimationPicker() {
