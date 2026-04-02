@@ -1,13 +1,27 @@
 import { ThemePicker } from "@/src/components/ThemePicker";
-import { useThemeColors } from "@/src/stores/preferencesStore";
+import {
+  usePreferencesStore,
+  useThemeColors,
+} from "@/src/stores/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
   const router = useRouter();
+  const reopenLastBook = usePreferencesStore((s) => s.reopenLastBookOnLaunch);
+  const setReopenLastBook = usePreferencesStore(
+    (s) => s.setReopenLastBookOnLaunch,
+  );
 
   return (
     <SafeAreaView
@@ -30,6 +44,37 @@ export default function SettingsScreen() {
           Appearance
         </Text>
         <ThemePicker showAccents />
+
+        <Text
+          style={[
+            styles.sectionTitle,
+            styles.sectionTitleSpaced,
+            { color: colors.textSecondary },
+          ]}
+        >
+          Behavior
+        </Text>
+
+        <View style={[styles.settingRow, { backgroundColor: colors.surface }]}>
+          <View style={styles.settingInfo}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Reopen last book on launch
+            </Text>
+            <Text
+              style={[
+                styles.settingDescription,
+                { color: colors.textSecondary },
+              ]}
+            >
+              Automatically open where you left off
+            </Text>
+          </View>
+          <Switch
+            value={reopenLastBook}
+            onValueChange={setReopenLastBook}
+            trackColor={{ false: colors.border, true: colors.accent }}
+          />
+        </View>
 
         <Text style={[styles.tip, { color: colors.textSecondary }]}>
           Font and reading settings can be changed while reading a book.
@@ -63,6 +108,28 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 12,
+  },
+  sectionTitleSpaced: {
+    marginTop: 28,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 12,
+  },
+  settingInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  settingLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  settingDescription: {
+    fontSize: 12,
+    marginTop: 2,
   },
   tip: {
     fontSize: 13,

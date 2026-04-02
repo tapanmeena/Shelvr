@@ -25,6 +25,7 @@ interface PreferencesActions {
   setLibraryViewMode: (mode: LibraryViewMode) => void;
   setShelvesViewMode: (mode: ShelvesViewMode) => void;
   setLastOpenedBook: (bookId: string | undefined) => void;
+  setReopenLastBookOnLaunch: (enabled: boolean) => void;
   setHasCompletedOnboarding: (completed: boolean) => void;
   reset: () => void;
   setHydrated: (isHydrated: boolean) => void;
@@ -84,6 +85,9 @@ export const usePreferencesStore = create<PreferncesStore>()(
 
       setLastOpenedBook: (lastOpenedBookId) => set({ lastOpenedBookId }),
 
+      setReopenLastBookOnLaunch: (reopenLastBookOnLaunch) =>
+        set({ reopenLastBookOnLaunch }),
+
       setHasCompletedOnboarding: (hasCompletedOnboarding) =>
         set({ hasCompletedOnboarding }),
 
@@ -103,6 +107,7 @@ export const usePreferencesStore = create<PreferncesStore>()(
         libraryViewMode: state.libraryViewMode,
         shelvesViewMode: state.shelvesViewMode,
         lastOpenedBookId: state.lastOpenedBookId,
+        reopenLastBookOnLaunch: state.reopenLastBookOnLaunch,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
       }),
       onRehydrateStorage: () => (state) => {
